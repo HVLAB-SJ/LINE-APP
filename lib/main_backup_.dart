@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
-import 'dart:ui_web' as ui_web;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
@@ -18,17 +16,18 @@ import 'package:permission_handler/permission_handler.dart';
 class AppVersion {
   static const String version = '1.0.1';
   static const String buildNumber = '2';
-  static String get buildTime => DateTime.now().millisecondsSinceEpoch.toString();
+  static String get buildTime =>
+      DateTime.now().millisecondsSinceEpoch.toString();
   static String get cacheKey => '${version}_${buildTime}';
-  
+
   // 카카오톡 인앱 브라우저 감지
   static bool get isKakaoTalk {
     if (kIsWeb) {
-      return html.window.navigator.userAgent?.contains('KAKAOTALK') ?? false;
+      return html.window.navigator.userAgent.contains('KAKAOTALK') ?? false;
     }
     return false;
   }
-  
+
   // PWA 모드 감지 (홈 화면에 추가된 앱)
   static bool get isPWA {
     if (kIsWeb) {
@@ -36,32 +35,33 @@ class AppVersion {
       final isStandalone = js.context.callMethod('eval', [
         "(window.matchMedia('(display-mode: standalone)').matches)"
       ]) as bool;
-      
+
       // iOS Safari의 navigator.standalone 체크
       final isIOSStandalone = js.context['navigator']['standalone'] ?? false;
-      
+
       // 디버깅 로그
-      print('PWA 감지 - standalone: $isStandalone, iOS standalone: $isIOSStandalone');
-      
+      print(
+          'PWA 감지 - standalone: $isStandalone, iOS standalone: $isIOSStandalone');
+
       return isStandalone || isIOSStandalone;
     }
     return false;
   }
-  
+
   // 캐시 무효화
   static void clearCache() {
     if (kIsWeb) {
       // 로컬 스토리지 캐시 무효화
       html.window.localStorage.clear();
       html.window.sessionStorage.clear();
-      
+
       // 페이지 새로고침 시 캐시 무시
       final currentUrl = html.window.location.href;
       final uri = Uri.parse(currentUrl);
       final newParams = Map<String, String>.from(uri.queryParameters);
       newParams['_v'] = cacheKey;
       newParams['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       final newUri = uri.replace(queryParameters: newParams);
       html.window.history.replaceState({}, '', newUri.toString());
     }
@@ -70,13 +70,13 @@ class AppVersion {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 카카오톡 인앱 브라우저에서 캐시 무효화
   if (AppVersion.isKakaoTalk) {
     AppVersion.clearCache();
     print('카카오톡 인앱 브라우저 감지 - 캐시 무효화 실행');
   }
-  
+
   await Firebase.initializeApp(
     options: const FirebaseOptions(
       apiKey: "AIzaSyCQ1_7hbvODByDihzdPe0bAg8r7zLRPMeo",
@@ -88,7 +88,7 @@ void main() async {
       appId: "1:651342907657:web:2ce01d847b0bef45752bd8",
     ),
   );
-  
+
   runApp(const LineDrawerApp());
 }
 
@@ -108,11 +108,9 @@ class LineDrawerApp extends StatelessWidget {
           primary: Color(0xFF238636),
           secondary: Color(0xFF1F6FEB),
           surface: Color(0xFF161B22),
-          background: Color(0xFF0D1117),
           onPrimary: Colors.white,
           onSecondary: Colors.white,
           onSurface: Color(0xFFE6EDF3),
-          onBackground: Color(0xFFE6EDF3),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -140,11 +138,6 @@ class Line {
   bool isDiagonal;
   Map<String, dynamic>? connectedPoints;
   int timestamp;
-  // 창문 속성 추가
-  double? windowWidth;  // 창문 폭
-  double? windowHeight; // 창문 높이
-  double? windowBottomHeight; // 하단 높이
-  double? windowTopHeight; // 상단 높이
 
   Line({
     required this.start,
@@ -153,10 +146,6 @@ class Line {
     this.isDiagonal = false,
     this.connectedPoints,
     int? timestamp,
-    this.windowWidth,
-    this.windowHeight,
-    this.windowBottomHeight,
-    this.windowTopHeight,
   }) : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch;
 
   Line copy() {
@@ -165,12 +154,9 @@ class Line {
       end: end,
       openingType: openingType,
       isDiagonal: isDiagonal,
-      connectedPoints: connectedPoints != null ? Map.from(connectedPoints!) : null,
+      connectedPoints:
+          connectedPoints != null ? Map.from(connectedPoints!) : null,
       timestamp: timestamp,
-      windowWidth: windowWidth,
-      windowHeight: windowHeight,
-      windowBottomHeight: windowBottomHeight,
-      windowTopHeight: windowTopHeight,
     );
   }
 
@@ -184,10 +170,6 @@ class Line {
       'isDiagonal': isDiagonal,
       'connectedPoints': connectedPoints,
       'timestamp': timestamp,
-      'windowWidth': windowWidth,
-      'windowHeight': windowHeight,
-      'windowBottomHeight': windowBottomHeight,
-      'windowTopHeight': windowTopHeight,
     };
   }
 
@@ -205,10 +187,6 @@ class Line {
       isDiagonal: json['isDiagonal'] as bool? ?? false,
       connectedPoints: json['connectedPoints'] as Map<String, dynamic>?,
       timestamp: json['timestamp'] as int?,
-      windowWidth: json['windowWidth'] != null ? (json['windowWidth'] as num).toDouble() : null,
-      windowHeight: json['windowHeight'] != null ? (json['windowHeight'] as num).toDouble() : null,
-      windowBottomHeight: json['windowBottomHeight'] != null ? (json['windowBottomHeight'] as num).toDouble() : null,
-      windowTopHeight: json['windowTopHeight'] != null ? (json['windowTopHeight'] as num).toDouble() : null,
     );
   }
 }
@@ -253,117 +231,18 @@ class Circle {
   }
 }
 
-// 메모 클래스
-class Memo {
-  Offset position;
-  String text;
-  int timestamp;
-  double fontSize;
-  Color color;
-
-  Memo({
-    required this.position,
-    required this.text,
-    int? timestamp,
-    this.fontSize = 14.0,
-    Color? color,
-  }) : timestamp = timestamp ?? DateTime.now().millisecondsSinceEpoch,
-       color = color ?? const Color(0xFFFFD700); // 기본 노란색
-
-  Memo copy() {
-    return Memo(
-      position: position,
-      text: text,
-      timestamp: timestamp,
-      fontSize: fontSize,
-      color: color,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'positionX': position.dx,
-      'positionY': position.dy,
-      'text': text,
-      'timestamp': timestamp,
-      'fontSize': fontSize,
-      'colorValue': color.value,
-    };
-  }
-
-  static Memo fromJson(Map<dynamic, dynamic> json) {
-    return Memo(
-      position: Offset(
-        (json['positionX'] as num).toDouble(),
-        (json['positionY'] as num).toDouble(),
-      ),
-      text: json['text'] as String? ?? '',
-      timestamp: json['timestamp'] as int?,
-      fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
-      color: json['colorValue'] != null
-          ? Color(json['colorValue'] as int)
-          : const Color(0xFFFFD700),
-    );
-  }
-}
-
-// 페이지 정보 클래스
-class PageInfo {
-  final String id; // 고유 ID (page1, page2, ... 또는 custom_123)
-  final int? number; // 페이지 번호 (1-10은 고정, null이면 커스텀)
-  final String? name; // 커스텀 페이지 이름
-  final bool isDeletable; // 삭제 가능 여부
-
-  PageInfo({
-    required this.id,
-    this.number,
-    this.name,
-    required this.isDeletable,
-  });
-
-  // 표시될 이름 반환
-  String get displayName {
-    if (number != null) {
-      return '$number';
-    }
-    return name ?? '새 페이지';
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'number': number,
-      'name': name,
-      'isDeletable': isDeletable,
-    };
-  }
-
-  static PageInfo fromJson(Map<dynamic, dynamic> json) {
-    return PageInfo(
-      id: json['id'] as String,
-      number: json['number'] as int?,
-      name: json['name'] as String?,
-      isDeletable: json['isDeletable'] as bool? ?? false,
-    );
-  }
-}
-
 // 거리측정 클래스
 class DistanceMeasurement {
-  final int lineIndex1;  // -1이면 선이 아님
-  final int lineIndex2;  // -1이면 선이 아님
-  final int? circleIndex1;  // 원 인덱스 (선이면 null)
-  final int? circleIndex2;  // 원 인덱스 (선이면 null)
-  final Offset point1; // 첫 번째 객체에서의 최단거리 점
-  final Offset point2; // 두 번째 객체에서의 최단거리 점
+  final int lineIndex1;
+  final int lineIndex2;
+  final Offset point1; // 첫 번째 선분에서의 최단거리 점
+  final Offset point2; // 두 번째 선분에서의 최단거리 점
   final double distance;
   final int timestamp;
 
   DistanceMeasurement({
     required this.lineIndex1,
     required this.lineIndex2,
-    this.circleIndex1,
-    this.circleIndex2,
     required this.point1,
     required this.point2,
     required this.distance,
@@ -484,33 +363,35 @@ class DiagonalDotsIcon extends StatelessWidget {
 
 class _DiagonalDotsPainter extends CustomPainter {
   final Color color;
-  
+
   _DiagonalDotsPainter({required this.color});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-      
+
     final dotPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-    
+
     // 대각선 그리기
     canvas.drawLine(
       Offset(size.width * 0.2, size.height * 0.8),
       Offset(size.width * 0.8, size.height * 0.2),
       paint,
     );
-    
+
     // 양 끝에 점 그리기
     final dotRadius = size.width * 0.15;
-    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.8), dotRadius, dotPaint);
-    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), dotRadius, dotPaint);
+    canvas.drawCircle(
+        Offset(size.width * 0.2, size.height * 0.8), dotRadius, dotPaint);
+    canvas.drawCircle(
+        Offset(size.width * 0.8, size.height * 0.2), dotRadius, dotPaint);
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
@@ -519,13 +400,13 @@ class _DiagonalDotsPainter extends CustomPainter {
 class WindowIcon extends StatelessWidget {
   final Color color;
   final double size;
-  
+
   const WindowIcon({
     Key? key,
     required this.color,
     this.size = 14,
   }) : super(key: key);
-  
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -537,16 +418,16 @@ class WindowIcon extends StatelessWidget {
 
 class _WindowPainter extends CustomPainter {
   final Color color;
-  
+
   _WindowPainter({required this.color});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    
+
     // 정사각형 그리기
     final rect = Rect.fromLTWH(
       size.width * 0.15,
@@ -555,205 +436,20 @@ class _WindowPainter extends CustomPainter {
       size.height * 0.7,
     );
     canvas.drawRect(rect, paint);
-    
+
     // 수직선 (가운데)
     canvas.drawLine(
       Offset(size.width * 0.5, size.height * 0.15),
       Offset(size.width * 0.5, size.height * 0.85),
       paint,
     );
-    
+
     // 수평선 (가운데)
     canvas.drawLine(
       Offset(size.width * 0.15, size.height * 0.5),
       Offset(size.width * 0.85, size.height * 0.5),
       paint,
     );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// DXF 저장 아이콘 위젯 (다운로드 화살표)
-class DxfSaveIcon extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const DxfSaveIcon({
-    Key? key,
-    required this.color,
-    this.size = 14,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _DxfSavePainter(color: color),
-    );
-  }
-}
-
-class _DxfSavePainter extends CustomPainter {
-  final Color color;
-
-  _DxfSavePainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // 아래 방향 화살표 (V 모양)
-    final arrowPath = Path();
-    arrowPath.moveTo(size.width * 0.2, size.height * 0.35);
-    arrowPath.lineTo(size.width * 0.5, size.height * 0.65);
-    arrowPath.lineTo(size.width * 0.8, size.height * 0.35);
-    canvas.drawPath(arrowPath, paint);
-
-    // 세로선 (화살표 몸통)
-    canvas.drawLine(
-      Offset(size.width * 0.5, size.height * 0.1),
-      Offset(size.width * 0.5, size.height * 0.65),
-      paint,
-    );
-
-    // 하단 가로선 (바닥)
-    canvas.drawLine(
-      Offset(size.width * 0.15, size.height * 0.85),
-      Offset(size.width * 0.85, size.height * 0.85),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// 되돌리기 아이콘 위젯 (Undo)
-class UndoIcon extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const UndoIcon({
-    Key? key,
-    required this.color,
-    this.size = 14,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _UndoPainter(color: color),
-    );
-  }
-}
-
-class _UndoPainter extends CustomPainter {
-  final Color color;
-
-  _UndoPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // 왼쪽 화살표 (<)
-    final arrowPath = Path();
-    arrowPath.moveTo(size.width * 0.35, size.height * 0.25);
-    arrowPath.lineTo(size.width * 0.15, size.height * 0.45);
-    arrowPath.lineTo(size.width * 0.35, size.height * 0.65);
-    canvas.drawPath(arrowPath, paint);
-
-    // 곡선 (화살표에서 오른쪽으로 돌아가는 곡선)
-    final curvePath = Path();
-    curvePath.moveTo(size.width * 0.15, size.height * 0.45);
-    curvePath.lineTo(size.width * 0.55, size.height * 0.45);
-    curvePath.quadraticBezierTo(
-      size.width * 0.85, size.height * 0.45,
-      size.width * 0.85, size.height * 0.7,
-    );
-    curvePath.quadraticBezierTo(
-      size.width * 0.85, size.height * 0.9,
-      size.width * 0.6, size.height * 0.9,
-    );
-    canvas.drawPath(curvePath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// 초기화 아이콘 위젯 (Refresh - 양방향 회전 화살표)
-class RefreshIcon extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const RefreshIcon({
-    Key? key,
-    required this.color,
-    this.size = 14,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _RefreshPainter(color: color),
-    );
-  }
-}
-
-class _RefreshPainter extends CustomPainter {
-  final Color color;
-
-  _RefreshPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.35;
-
-    // 상단 반원 (오른쪽 위에서 시작)
-    final topArcRect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(topArcRect, -2.5, 2.0, false, paint);
-
-    // 상단 화살표
-    final topArrowPath = Path();
-    topArrowPath.moveTo(size.width * 0.75, size.height * 0.15);
-    topArrowPath.lineTo(size.width * 0.75, size.height * 0.35);
-    topArrowPath.moveTo(size.width * 0.75, size.height * 0.15);
-    topArrowPath.lineTo(size.width * 0.55, size.height * 0.15);
-    canvas.drawPath(topArrowPath, paint);
-
-    // 하단 반원 (왼쪽 아래에서 시작)
-    canvas.drawArc(topArcRect, 0.6, 2.0, false, paint);
-
-    // 하단 화살표
-    final bottomArrowPath = Path();
-    bottomArrowPath.moveTo(size.width * 0.25, size.height * 0.85);
-    bottomArrowPath.lineTo(size.width * 0.25, size.height * 0.65);
-    bottomArrowPath.moveTo(size.width * 0.25, size.height * 0.85);
-    bottomArrowPath.lineTo(size.width * 0.45, size.height * 0.85);
-    canvas.drawPath(bottomArrowPath, paint);
   }
 
   @override
@@ -770,35 +466,27 @@ class LineDrawerScreen extends StatefulWidget {
 class _LineDrawerScreenState extends State<LineDrawerScreen> {
   List<Line> lines = [];
   List<Circle> circles = [];
-  List<Memo> memos = [];
   List<Map<String, dynamic>> linesHistory = [];
   List<Map<String, dynamic>> circlesHistory = [];
-  List<Map<String, dynamic>> memosHistory = [];
   Offset currentPoint = const Offset(0, 0);
   double viewScale = 0.3;
   Offset viewOffset = const Offset(500, 500);
   double viewRotation = 0.0; // 화면 회전 각도 (라디안)
   int selectedLineIndex = -1;
   int selectedCircleIndex = -1;
-  bool isCircleDragging = false;  // 원 드래그 중인지 여부
-  Offset? circleDragOffset;  // 원 드래그 시작 시 오프셋
 
   // 거리측정 관련 변수
   bool distanceMeasureMode = false;
   int? firstSelectedLineForDistance;
   Offset? firstSelectedPointForDistance; // 점 선택 추가
-  int? firstSelectedCircleForDistance; // 원 선택 추가
   List<DistanceMeasurement> distanceMeasurements = [];
   int? selectedMeasurementIndex;
 
   // 페이지 관련 변수
-  List<PageInfo> pages = []; // 모든 페이지 목록 (기본 1-10 + 커스텀)
-  String currentPageId = 'page1'; // 현재 선택된 페이지 ID
-  int currentPage = 1; // 현재 선택된 페이지 (1-5) - 하위 호환성을 위해 유지
+  int currentPage = 1; // 현재 선택된 페이지 (1-5)
   bool isPageDropdownOpen = false; // 드롭다운 열림 상태
   final LayerLink _dropdownLayerLink = LayerLink(); // 드롭다운 위치 연결용
   OverlayEntry? _dropdownOverlay; // 드롭다운 오버레이
-  Map<String, int?> pageLinesCount = {}; // 페이지별 선 개수 (key는 pageId)
   // 점 간 드래그 선 그리기 변수
   bool isPointDragging = false;
   Offset? pointDragStart;
@@ -809,7 +497,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   String? pendingOpeningType;
   String? arrowDirection;
   bool isDoubleDirectionPressed = false; // 방향키 두 번 누름 상태
-  
+
   // 그룹 드래그 앤 드롭 변수
   bool isGroupDragging = false;
   Offset? groupDragStartPoint; // 드래그 시작한 끝점
@@ -818,65 +506,50 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   Map<int, Offset> originalLineStarts = {}; // 원래 선들의 시작점
   Map<int, Offset> originalLineEnds = {}; // 원래 선들의 끝점
   Offset? snapTargetPoint; // 스냅될 대상 끝점
-  
+
   // 더블클릭으로 선택된 그룹
   Set<int> selectedGroupLines = {}; // 선택된 그룹의 선들
   DateTime? lastTapTime; // 마지막 탭 시간 (더블클릭 감지용)
-  Offset? lastTapPositionForDouble; // 마지막 탭 위치 (더블클릭 감지용)
-  
+
   // Firebase
   late DatabaseReference _linesRef;
   late DatabaseReference _circlesRef;
-  late DatabaseReference _memosRef;
   late DatabaseReference _currentPointRef;
   late DatabaseReference _metadataRef;
   StreamSubscription? _linesSubscription;
   StreamSubscription? _circlesSubscription;
-  StreamSubscription? _memosSubscription;
   StreamSubscription? _currentPointSubscription;
   StreamSubscription? _metadataSubscription;
   bool _isUpdating = false;
 
-  // 메모 관련 변수
-  int? selectedMemoIndex;
-  bool _memosLoaded = false;
-  Timer? _longPressTimer;
-  Offset? _longPressPosition;
-  bool _isLongPressing = false;
-  
   // 세션 ID (각 기기를 구분하기 위함)
   final String sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-  
+
   // 타임스탬프 기반 동기화
   int _lastUpdateTimestamp = 0;
   String _lastUpdateDevice = '';
   bool _isLocalUpdate = false;
-  
+
   // 팬/줌 관련 변수
   Offset? panStartOffset;
   double? zoomStartScale;
   Offset? dragStartPos;
-  
+
   // 마우스 호버 관련 변수
   Offset? hoveredPoint;
   Offset? mousePosition;
   int? hoveredLineIndex;
-  
+
   // 선택된 끝점
   Offset? selectedEndpoint;
   int? selectedEndpointLineIndex;
   String? selectedEndpointType; // 'start' 또는 'end'
 
-  // 끝점 순환 선택을 위한 변수 (모바일/태블릿 전용)
-  Offset? _lastTappedEndpoint;
-  List<int> _endpointConnectedLines = [];
-  int _endpointCycleIndex = -1; // -1: 끝점 선택, 0~: 연결된 선 인덱스
-
   // 터치 이벤트 관련 변수
   Offset? _lastTapPosition;
   DateTime? _lastTapTime;
   bool _isScaling = false; // 스케일 제스처 중인지 추적
-  
+
   // 인라인 입력 관련 변수
   bool showInlineInput = false;
   String inlineDirection = "";
@@ -884,35 +557,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   FocusNode inlineFocus = FocusNode();
   bool isProcessingInput = false;
 
-  // 창문 속성 입력을 위한 컨트롤러
-  TextEditingController windowWidthController = TextEditingController();
-  TextEditingController windowHeightController = TextEditingController();
-  TextEditingController windowBottomHeightController = TextEditingController();
-  TextEditingController windowTopHeightController = TextEditingController();
-  bool showWindowProperties = false; // 창문 속성 입력 필드 표시 여부
-  int? selectedWindowLineIndex; // 선택된 창문 선의 인덱스
-  String? activeWindowField; // 현재 활성화된 창문 입력 필드 ('width', 'height', 'bottomHeight', 'topHeight')
-
   // 전체화면 관련 변수
   bool isFullscreen = false;
   bool _userRequestedFullscreen = false; // 사용자가 직접 전체화면을 요청했는지 추적
   bool _isRecovering = false; // 전체화면 복구 중인지 추적
-  
+
   // 초기 데이터 로딩 상태 추적
   bool _linesLoaded = false;
   bool _circlesLoaded = false;
-  bool _memosLoaded2 = false; // _memosLoaded는 위에서 정의됨
   bool _currentPointLoaded = false;
   bool _initialViewFitExecuted = false;
-  
+
   // 선 팝업 관련 변수
   bool showLinePopup = false;
   Offset? linePopupPosition;
   int? selectedLineForPopup;
-  
+
   // 레이아웃 모드 관리
   String layoutMode = _getDefaultLayoutMode(); // 자동 감지
-  
+
   // 자동 기기 감지 함수
   static String _getDefaultLayoutMode() {
     if (kIsWeb) {
@@ -921,31 +584,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       final maxTouchPoints = html.window.navigator.maxTouchPoints ?? 0;
       final screenWidth = html.window.screen?.width ?? 0;
       final screenHeight = html.window.screen?.height ?? 0;
-      
+
       // 아이패드 감지 (iPadOS 13+ 포함)
-      final isIPad = userAgent.contains('ipad') || 
-                    (userAgent.contains('macintosh') && maxTouchPoints > 0) ||
-                    platform.contains('ipad');
-      
+      final isIPad = userAgent.contains('ipad') ||
+          (userAgent.contains('macintosh') && maxTouchPoints > 0) ||
+          platform.contains('ipad');
+
       // 모바일 기기 감지
       final isMobileDevice = userAgent.contains('iphone') ||
-                            userAgent.contains('android') ||
-                            userAgent.contains('mobile') ||
-                            userAgent.contains('phone');
-      
+          userAgent.contains('android') ||
+          userAgent.contains('mobile') ||
+          userAgent.contains('phone');
+
       // 데스크톱 감지 (터치가 없고, 화면이 큰 경우)
-      final isDesktopDevice = !isMobileDevice && 
-                             !isIPad && 
-                             maxTouchPoints == 0 &&
-                             screenWidth >= 1024;
-      
+      final isDesktopDevice = !isMobileDevice &&
+          !isIPad &&
+          maxTouchPoints == 0 &&
+          screenWidth >= 1024;
+
       print('=== 자동 기기 감지 ===');
       print('User Agent: ${html.window.navigator.userAgent}');
       print('Platform: ${html.window.navigator.platform}');
       print('Touch Points: $maxTouchPoints');
       print('Screen: ${screenWidth}x$screenHeight');
-      print('iPad: $isIPad, Mobile: $isMobileDevice, Desktop: $isDesktopDevice');
-      
+      print(
+          'iPad: $isIPad, Mobile: $isMobileDevice, Desktop: $isDesktopDevice');
+
       if (isIPad) {
         print('감지 결과: 태블릿 모드');
         return 'tablet';
@@ -964,25 +628,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       return 'mobile';
     }
   }
-  
+
   // 모바일 기기 감지
   bool get isMobile {
     return layoutMode == 'mobile';
   }
-  
+
   // 태블릿 모드 감지 (자동 감지 제거)
   bool get isTablet {
     // 수동 태블릿 모드만 지원
     return layoutMode == 'tablet';
   }
-  
+
   // 데스크톱 모드 감지
   bool get isDesktop {
     return layoutMode == 'desktop';
   }
-  
+
   final FocusNode _focusNode = FocusNode();
-  
+
   // 음성 인식 관련 변수
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -990,17 +654,17 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   String _lastWords = '';
   String _recognizedText = '';
   bool _speechAvailable = false;
-  
+
   // 웹 전용 음성 인식 변수
   html.SpeechRecognition? _webSpeechRecognition;
   bool _webSpeechAvailable = false;
-  
+
   // Safari 전용 음성 인식 변수
   js.JsObject? _safariSpeechRecognition;
-  
+
   // 마지막 방향 저장
   String? lastDirection;
-  
+
   // 음성 인식 처리 중복 방지 (강화)
   bool _isSpeechProcessing = false;
   DateTime? _lastSpeechProcessTime;
@@ -1011,10 +675,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   double? _lastProcessedNumber; // 마지막으로 처리된 숫자
   DateTime? _lastLineDrawTime; // 마지막 선 그리기 시간
   bool _isVoiceProcessing = false; // 음성 처리 중 상태 (UI용)
-  
+
   // 음성 인식 토글 모드 관련 변수
   // 자동 음성 모드 변수들 제거 - 성능 최적화를 위해 단순한 음성 인식 모드로 변경
-  
+
   // 화면 이동 및 줌 관련 변수
   bool _isPanning = false;
   Offset? _lastPanPosition;
@@ -1023,25 +687,23 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   Offset? _rotationCenterScreen; // 회전 중심점 (화면 좌표)
   Offset? _rotationCenterModel; // 회전 중심점 (모델 좌표)
   int _touchCount = 0;
-  bool _isRotating = false; // 회전 중인지 추적 (한 번 시작되면 부드럽게 회전)
 
   // Firebase 참조를 페이지별로 업데이트
   void _updateFirebaseRefs() {
-    _linesRef = FirebaseDatabase.instance.ref('drawing/$currentPageId/lines');
-    _circlesRef = FirebaseDatabase.instance.ref('drawing/$currentPageId/circles');
-    _memosRef = FirebaseDatabase.instance.ref('drawing/$currentPageId/memos');
-    _currentPointRef = FirebaseDatabase.instance.ref('drawing/$currentPageId/currentPoint');
-    _metadataRef = FirebaseDatabase.instance.ref('drawing/$currentPageId/metadata');
+    _linesRef = FirebaseDatabase.instance.ref('drawing/page$currentPage/lines');
+    _circlesRef =
+        FirebaseDatabase.instance.ref('drawing/page$currentPage/circles');
+    _currentPointRef =
+        FirebaseDatabase.instance.ref('drawing/page$currentPage/currentPoint');
+    _metadataRef =
+        FirebaseDatabase.instance.ref('drawing/page$currentPage/metadata');
   }
-  
-  // 페이지 ID로 변경 (새로운 방식)
-  Future<void> _changePageById(String newPageId) async {
-    if (newPageId == currentPageId) return;
 
-    print('페이지 변경: $currentPageId → $newPageId');
+  // 페이지 변경 함수
+  void _changePage(int newPage) async {
+    if (newPage == currentPage) return;
 
-    // 현재 페이지의 선 개수 캐시 업데이트
-    pageLinesCount[currentPageId] = lines.length;
+    print('페이지 변경: $currentPage → $newPage');
 
     // 현재 페이지 데이터 저장
     await _updateFirebase();
@@ -1049,43 +711,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     // 기존 구독 취소
     await _linesSubscription?.cancel();
     await _circlesSubscription?.cancel();
-    await _memosSubscription?.cancel();
     await _currentPointSubscription?.cancel();
     await _metadataSubscription?.cancel();
 
     // 구독 변수 초기화
     _linesSubscription = null;
     _circlesSubscription = null;
-    _memosSubscription = null;
     _currentPointSubscription = null;
     _metadataSubscription = null;
 
-    // 새 페이지 정보 찾기
-    final newPage = pages.firstWhere((p) => p.id == newPageId);
-
     // 페이지 변경
     setState(() {
-      currentPageId = newPageId;
-      // 하위 호환성을 위해 currentPage도 업데이트 (기본 페이지인 경우)
-      currentPage = newPage.number ?? currentPage;
+      currentPage = newPage;
       isPageDropdownOpen = false;
 
       // 데이터 초기화 (새 페이지 데이터 로드 전까지 빈 상태)
       lines.clear();
       circles.clear();
-      memos.clear();
       currentPoint = const Offset(0, 0);
       selectedLineIndex = -1;
       selectedCircleIndex = -1;
-      selectedMemoIndex = null;
       selectedGroupLines.clear();
       linesHistory.clear();
-      memosHistory.clear();
 
       // 로딩 상태 초기화
       _linesLoaded = false;
       _circlesLoaded = false;
-      _memosLoaded = false;
       _currentPointLoaded = false;
       _initialViewFitExecuted = false;
     });
@@ -1100,48 +751,36 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     _setupRealtimeSync();
   }
 
-  // 페이지 변경 함수 (하위 호환성을 위해 유지)
-  void _changePage(int newPage) async {
-    final pageId = 'page$newPage';
-    await _changePageById(pageId);
-  }
-  
   @override
   void initState() {
     super.initState();
-
-    // 기본 페이지 목록 초기화 (1-10)
-    _initializeDefaultPages();
-
-    // Firebase에서 페이지 목록 로드
-    _loadPagesFromFirebase();
 
     // Firebase 초기화 (현재 페이지 기준)
     _updateFirebaseRefs();
 
     // 실시간 동기화 설정
     _setupRealtimeSync();
-    
+
     // 전체화면 리스너 설정
     _setupFullscreenListener();
-    
+
     // 기기 감지 디버깅 정보 출력
     _printDeviceInfo();
-    
+
     // 음성 인식 초기화
     _initSpeech();
-    
+
     // 앱 시작 시 포커스 설정 및 즉시 뷰 맞춤
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
-      
+
       // 앱 시작 시 즉시 뷰 맞춤 실행 (강화된 버전)
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           print('앱 시작 시 자동 뷰 맞춤 실행');
           print('현재 선 개수: ${lines.length}, 원 개수: ${circles.length}');
           print('현재 뷰 스케일: $viewScale, 오프셋: $viewOffset');
-          
+
           // 데이터가 있으면 fitViewToDrawing, 없으면 centerCurrentPoint
           if (lines.isNotEmpty || circles.isNotEmpty) {
             print('데이터가 있음 - fitViewToDrawing 실행');
@@ -1152,7 +791,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           }
         }
       });
-      
+
       // 추가로 1초 후에도 한 번 더 실행 (Firebase 데이터 로딩 완료 후)
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted && (lines.isNotEmpty || circles.isNotEmpty)) {
@@ -1160,16 +799,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           fitViewToDrawing();
         }
       });
-
-      // 백그라운드에서 모든 페이지의 선 개수 미리 로딩
-      Future.delayed(const Duration(milliseconds: 2000), () {
-        if (mounted) {
-          _loadAllPagesLinesCount();
-        }
-      });
     });
   }
-  
+
   void _printDeviceInfo() {
     if (kIsWeb) {
       final userAgent = html.window.navigator.userAgent;
@@ -1177,21 +809,21 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       final maxTouchPoints = html.window.navigator.maxTouchPoints;
       final screenWidth = html.window.screen?.width;
       final screenHeight = html.window.screen?.height;
-      
+
       // 상세 감지 정보
       final userAgentLower = userAgent.toLowerCase();
       final platformLower = platform?.toLowerCase() ?? '';
-      
+
       // 아이패드 자동 감지 및 설정
-      final isIPad = userAgentLower.contains('ipad') || 
-                    (userAgentLower.contains('macintosh') && maxTouchPoints! > 0) ||
-                    platformLower.contains('ipad');
-      
+      final isIPad = userAgentLower.contains('ipad') ||
+          (userAgentLower.contains('macintosh') && maxTouchPoints! > 0) ||
+          platformLower.contains('ipad');
+
       if (isIPad && layoutMode == 'mobile') {
         print('아이패드 감지됨 - 자동으로 태블릿 모드로 전환');
         layoutMode = 'tablet';
       }
-      
+
       print('=== 기기 감지 정보 ===');
       print('User Agent: $userAgent');
       print('Platform: $platform');
@@ -1224,14 +856,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         print('로컬 업데이트 중 - 메타데이터 동기화 무시');
         return;
       }
-      
+
       final data = event.snapshot.value;
       if (data != null && data is Map) {
         final timestamp = data['lastUpdateTimestamp'] as int? ?? 0;
         final device = data['lastUpdateDevice'] as String? ?? '';
-        
-        print('메타데이터 수신 - 타임스탬프: $timestamp, 기기: $device, 현재: $_lastUpdateTimestamp');
-        
+
+        print(
+            '메타데이터 수신 - 타임스탬프: $timestamp, 기기: $device, 현재: $_lastUpdateTimestamp');
+
         // 더 최신 데이터가 있으면 전체 데이터 다시 로드
         if (timestamp > _lastUpdateTimestamp && device != sessionId) {
           print('더 최신 데이터 감지 - 전체 데이터 동기화 시작');
@@ -1241,14 +874,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       }
     });
-    
+
     // 선들 동기화 (초기 로딩용)
     _linesSubscription = _linesRef.onValue.listen((event) {
       if (_isUpdating || _isLocalUpdate) {
         print('업데이트 중 - 선 동기화 무시');
         return;
       }
-      
+
       final data = event.snapshot.value;
       setState(() {
         final newLines = <Line>[];
@@ -1258,10 +891,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               .map((item) => Line.fromJson(item as Map<dynamic, dynamic>))
               .toList());
         }
-        
+
         lines = newLines;
         print('선 데이터 로딩 - ${lines.length}개');
-        
+
         // 선 데이터 로딩 완료 표시
         if (!_linesLoaded) {
           _linesLoaded = true;
@@ -1269,14 +902,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       });
     });
-    
+
     // 원들 동기화 (초기 로딩용)
     _circlesSubscription = _circlesRef.onValue.listen((event) {
       if (_isUpdating || _isLocalUpdate) {
         print('업데이트 중 - 원 동기화 무시');
         return;
       }
-      
+
       final data = event.snapshot.value;
       setState(() {
         final newCircles = <Circle>[];
@@ -1286,10 +919,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               .map((item) => Circle.fromJson(item as Map<dynamic, dynamic>))
               .toList());
         }
-        
+
         circles = newCircles;
         print('원 데이터 로딩 - ${circles.length}개');
-        
+
         // 원 데이터 로딩 완료 표시
         if (!_circlesLoaded) {
           _circlesLoaded = true;
@@ -1298,37 +931,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
     });
 
-    // 메모들 동기화 (초기 로딩용)
-    _memosSubscription = _memosRef.onValue.listen((event) {
-      if (_isUpdating || _isLocalUpdate) {
-        print('업데이트 중 - 메모 동기화 무시');
-        return;
-      }
-
-      final data = event.snapshot.value;
-      setState(() {
-        final newMemos = <Memo>[];
-        if (data != null && data is List) {
-          newMemos.addAll(data
-              .where((item) => item != null)
-              .map((item) => Memo.fromJson(item as Map<dynamic, dynamic>))
-              .toList());
-        }
-
-        memos = newMemos;
-        print('메모 데이터 로딩 - ${memos.length}개');
-
-        // 메모 데이터 로딩 완료 표시
-        if (!_memosLoaded) {
-          _memosLoaded = true;
-        }
-      });
-    });
-
     // 현재 점 동기화 (초기 로딩용)
     _currentPointSubscription = _currentPointRef.onValue.listen((event) {
       if (_isUpdating || _isLocalUpdate) return;
-      
+
       final data = event.snapshot.value;
       setState(() {
         if (data != null && data is Map) {
@@ -1339,7 +945,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         } else {
           currentPoint = const Offset(0, 0); // 데이터가 없으면 원점
         }
-        
+
         // 현재 점 데이터 로딩 완료 표시
         if (!_currentPointLoaded) {
           _currentPointLoaded = true;
@@ -1351,12 +957,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void _checkInitialDataLoaded() {
     // 모든 초기 데이터가 로딩되고 아직 뷰 맞춤을 실행하지 않았다면
-    if (_linesLoaded && _circlesLoaded && _currentPointLoaded && !_initialViewFitExecuted) {
+    if (_linesLoaded &&
+        _circlesLoaded &&
+        _currentPointLoaded &&
+        !_initialViewFitExecuted) {
       _initialViewFitExecuted = true;
-      
+
       print('초기 데이터 로딩 완료 - 뷰 맞춤 자동 실행');
       print('현재 기기 모드 - isMobile: $isMobile, isTablet: $isTablet');
-      
+
       // 약간의 지연 후 뷰 맞춤 실행 (UI 렌더링 완료 대기)
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Future.delayed(const Duration(milliseconds: 300), () {
@@ -1380,35 +989,33 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('Firebase 업데이트 중 - 중복 호출 무시');
       return;
     }
-    
+
     _isUpdating = true;
     _isLocalUpdate = true;
-    
+
     try {
       final currentTimestamp = DateTime.now().millisecondsSinceEpoch;
-      
-      print('Firebase 업데이트 시작 - 페이지: $currentPageId, 타임스탬프: $currentTimestamp');
+
+      print('Firebase 업데이트 시작 - 페이지: $currentPage, 타임스탬프: $currentTimestamp');
       print('업데이트할 선 개수: ${lines.length}');
       print('업데이트할 원 개수: ${circles.length}');
-      print('업데이트할 메모 개수: ${memos.length}');
       print('현재 점: $currentPoint');
 
       // 로컬 데이터를 Firebase 형식으로 변환
       final localLinesJson = lines.map((line) => line.toJson()).toList();
-      final localCirclesJson = circles.map((circle) => circle.toJson()).toList();
-      final localMemosJson = memos.map((memo) => memo.toJson()).toList();
+      final localCirclesJson =
+          circles.map((circle) => circle.toJson()).toList();
 
       // 모든 데이터를 한 번에 업데이트 (원자적 업데이트)
       final updates = <String, dynamic>{};
-      updates['drawing/$currentPageId/lines'] = localLinesJson;
-      updates['drawing/$currentPageId/circles'] = localCirclesJson;
-      updates['drawing/$currentPageId/memos'] = localMemosJson;
-      updates['drawing/$currentPageId/currentPoint'] = {
+      updates['drawing/page$currentPage/lines'] = localLinesJson;
+      updates['drawing/page$currentPage/circles'] = localCirclesJson;
+      updates['drawing/page$currentPage/currentPoint'] = {
         'x': currentPoint.dx,
         'y': currentPoint.dy,
         'timestamp': currentTimestamp,
       };
-      updates['drawing/$currentPageId/metadata'] = {
+      updates['drawing/page$currentPage/metadata'] = {
         'lastUpdateTimestamp': currentTimestamp,
         'lastUpdateDevice': sessionId,
         'deviceInfo': {
@@ -1418,20 +1025,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           'timestamp': currentTimestamp,
         }
       };
-      
+
       // 타임스탬프 업데이트
       _lastUpdateTimestamp = currentTimestamp;
       _lastUpdateDevice = sessionId;
-      
+
       print('Firebase 업데이트 실행 중...');
-      
+
       // Firebase 업데이트 실행
       await FirebaseDatabase.instance.ref().update(updates);
-      
-      print('Firebase 업데이트 완료 - 선: ${localLinesJson.length}, 원: ${localCirclesJson.length}');
+
+      print(
+          'Firebase 업데이트 완료 - 선: ${localLinesJson.length}, 원: ${localCirclesJson.length}');
       print('타임스탬프: $currentTimestamp, 기기: $sessionId');
       print('업데이트 성공 - 모든 데이터 저장됨');
-      
     } catch (e) {
       print('Firebase 업데이트 오류: $e');
       print('오류 상세 정보: ${e.toString()}');
@@ -1443,28 +1050,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
     }
   }
-  
+
   // Firebase에서 완전한 데이터 로드 (타임스탬프 기반 동기화)
   Future<void> _loadCompleteDataFromFirebase() async {
     if (_isUpdating) return;
-    
+
     _isUpdating = true;
-    
+
     try {
-      print('Firebase에서 완전한 데이터 로드 시작... (페이지: $currentPageId)');
-      
+      print('Firebase에서 완전한 데이터 로드 시작... (페이지: $currentPage)');
+
       // 모든 데이터를 병렬로 가져오기
       final futures = await Future.wait([
         _linesRef.get(),
         _circlesRef.get(),
-        _memosRef.get(),
         _currentPointRef.get(),
       ]);
 
       final linesSnapshot = futures[0];
       final circlesSnapshot = futures[1];
-      final memosSnapshot = futures[2];
-      final currentPointSnapshot = futures[3];
+      final currentPointSnapshot = futures[2];
 
       setState(() {
         // 선 데이터 로드
@@ -1489,17 +1094,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
         circles = newCircles;
 
-        // 메모 데이터 로드
-        final newMemos = <Memo>[];
-        if (memosSnapshot.exists && memosSnapshot.value != null) {
-          final data = memosSnapshot.value as List;
-          newMemos.addAll(data
-              .where((item) => item != null)
-              .map((item) => Memo.fromJson(item as Map<dynamic, dynamic>))
-              .toList());
-        }
-        memos = newMemos;
-
         // 현재 점 로드
         if (currentPointSnapshot.exists && currentPointSnapshot.value != null) {
           final data = currentPointSnapshot.value as Map;
@@ -1509,22 +1103,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           );
         }
 
-        print('완전한 데이터 로드 완료 (페이지: $currentPageId) - 선: ${lines.length}, 원: ${circles.length}, 메모: ${memos.length}');
+        print(
+            '완전한 데이터 로드 완료 (페이지: $currentPage) - 선: ${lines.length}, 원: ${circles.length}');
       });
-      
     } catch (e) {
       print('완전한 데이터 로드 오류: $e');
     } finally {
       _isUpdating = false;
     }
   }
-  
-
 
   // 음성 인식 초기화
   Future<void> _initSpeech() async {
     print('음성 인식 초기화 시작...');
-    
+
     if (kIsWeb) {
       // 웹에서는 네이티브 Web Speech API 사용
       await _initWebSpeech();
@@ -1533,22 +1125,21 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       await _initMobileSpeech();
     }
   }
-  
+
   // 웹 전용 음성 인식 초기화
   Future<void> _initWebSpeech() async {
     print('웹 음성 인식 초기화 시작...');
     print('PWA 모드: ${AppVersion.isPWA}');
-    
+
     // iPad PWA에서 권한 사전 요청
     if (AppVersion.isPWA && isTablet) {
       print('iPad PWA 감지 - 사전 권한 요청 시도');
       try {
         // 권한 상태 먼저 확인
-        final permissionStatus = await html.window.navigator.permissions?.query({
-          'name': 'microphone'
-        });
+        final permissionStatus = await html.window.navigator.permissions
+            ?.query({'name': 'microphone'});
         print('현재 마이크 권한 상태: ${permissionStatus?.state}');
-        
+
         // 권한이 prompt 상태면 사용자에게 안내
         if (permissionStatus?.state == 'prompt') {
           if (mounted) {
@@ -1565,72 +1156,75 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         print('권한 상태 확인 실패: $e');
       }
     }
-    
+
     try {
       // Web Speech API 지원 확인
       final userAgent = html.window.navigator.userAgent;
       print('사용자 에이전트: $userAgent');
-      
+
       // Safari, Chrome, Edge 등 지원 브라우저 확인
-      if (userAgent.contains('Chrome') || 
-          userAgent.contains('Edge') || 
+      if (userAgent.contains('Chrome') ||
+          userAgent.contains('Edge') ||
           userAgent.contains('Safari')) {
         print('Web Speech API 지원 브라우저 감지');
-        
+
         try {
           // 먼저 표준 SpeechRecognition 시도
           _webSpeechRecognition = html.SpeechRecognition();
           print('SpeechRecognition 객체 생성 성공');
         } catch (e) {
           print('SpeechRecognition 객체 생성 실패: $e');
-          
+
           // Safari 브라우저에서 webkit 접두사 시도
           if (userAgent.contains('Safari') && !userAgent.contains('Chrome')) {
             print('Safari 브라우저 감지 - webkit 접두사 시도');
-            
+
             try {
               // PWA와 일반 브라우저 모두에서 동일한 방식으로 확인
-              final webkitSupported = js.context.callMethod('eval', [
-                'typeof webkitSpeechRecognition !== "undefined"'
-              ]) as bool;
-              
-              print('webkitSpeechRecognition 지원: $webkitSupported (PWA: ${AppVersion.isPWA})');
-              
+              final webkitSupported = js.context.callMethod('eval',
+                  ['typeof webkitSpeechRecognition !== "undefined"']) as bool;
+
+              print(
+                  'webkitSpeechRecognition 지원: $webkitSupported (PWA: ${AppVersion.isPWA})');
+
               if (webkitSupported) {
                 // iPad PWA에서 추가 초기화
                 if (AppVersion.isPWA && isTablet) {
                   print('iPad PWA 모드 - webkitSpeechRecognition 추가 초기화');
-                  
+
                   // PWA에서 webkitSpeechRecognition 객체 생성 테스트
                   try {
-                    js.context.callMethod('eval', ['''
+                    js.context.callMethod('eval', [
+                      '''
                       // webkitSpeechRecognition 테스트 객체 생성
                       window._testSpeechRecognition = new webkitSpeechRecognition();
                       window._testSpeechRecognition = null; // 즉시 해제
                       console.log('iPad PWA: webkitSpeechRecognition 객체 생성 테스트 성공');
-                    ''']);
+                    '''
+                    ]);
                   } catch (e) {
                     print('iPad PWA webkitSpeechRecognition 객체 생성 실패: $e');
                     throw Exception('iPad PWA에서 음성인식 객체를 생성할 수 없습니다.');
                   }
                 }
-                
+
                 _webSpeechAvailable = true;
                 _speechAvailable = true;
                 print('Safari 음성인식 초기화 성공 (PWA: ${AppVersion.isPWA})');
                 return;
               }
-              
+
               throw Exception('Safari에서 webkitSpeechRecognition을 찾을 수 없습니다.');
             } catch (e3) {
               print('Safari webkit 처리 실패: $e3');
               _webSpeechAvailable = false;
               _speechAvailable = false;
-              
+
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Safari에서는 음성 인식 지원이 제한됩니다. Chrome 또는 Edge 사용을 권장합니다.'),
+                    content: Text(
+                        'Safari에서는 음성 인식 지원이 제한됩니다. Chrome 또는 Edge 사용을 권장합니다.'),
                     duration: Duration(seconds: 5),
                     backgroundColor: Color(0xFFCE9178),
                   ),
@@ -1639,21 +1233,22 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               return;
             }
           }
-          
+
           throw Exception('이 브라우저는 음성 인식을 지원하지 않습니다.');
         }
-        
+
         if (_webSpeechRecognition != null) {
           print('SpeechRecognition 객체 생성 성공');
-          
+
           // 음성 인식 설정 (감도 향상)
           _webSpeechRecognition!.lang = 'ko-KR';
           _webSpeechRecognition!.continuous = true;
           _webSpeechRecognition!.interimResults = true;
           _webSpeechRecognition!.maxAlternatives = 3; // 대안 결과 증가
-          
+
           // 감도 향상을 위한 추가 설정
-          js.context.callMethod('eval', ['''
+          js.context.callMethod('eval', [
+            '''
             if (window.webkitSpeechRecognition) {
               window.webkitSpeechRecognition.prototype.constructor.prototype.grammars = null;
               window.webkitSpeechRecognition.prototype.constructor.prototype.serviceURI = null;
@@ -1664,8 +1259,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               // 음성 합성 볼륨을 통한 마이크 감도 간접 조정
               window.speechSynthesis.volume = 1.0;
             }
-          ''']);
-          
+          '''
+          ]);
+
           // 이벤트 리스너 설정
           _webSpeechRecognition!.onResult.listen((event) {
             print('웹 음성 인식 결과 수신: ${event.results}');
@@ -1675,14 +1271,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               final length = result.length;
               if (length != null && length > 0) {
                 final alternative = result.item(0);
-                final transcript = alternative?.transcript;
+                final transcript = alternative.transcript;
                 print('인식된 텍스트: $transcript');
-                
+
                 setState(() {
                   _recognizedText = transcript ?? '';
                   _lastWords = transcript ?? '';
                 });
-                
+
                 // 최종 결과만 처리하여 중복 방지
                 if (result.isFinal == true) {
                   print('최종 결과 처리');
@@ -1696,10 +1292,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               }
             }
           });
-          
+
           _webSpeechRecognition!.onError.listen((event) {
             print('웹 음성 인식 오류: ${event.error}');
-            
+
             // aborted 오류 처리
             if (event.error == 'aborted') {
               print('음성 인식이 중단됨 (정상 종료 또는 권한 문제)');
@@ -1710,18 +1306,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               // 사용자에게 오류 메시지를 표시하지 않음
               return;
             }
-            
+
             // no-speech 오류는 무시 (음성이 감지되지 않음)
             if (event.error == 'no-speech') {
               print('음성이 감지되지 않음 - 정상 동작');
               return;
             }
-            
+
             // 기타 오류 처리
             setState(() {
               _isListening = false;
             });
-            
+
             if (mounted && event.error != 'not-allowed') {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -1732,13 +1328,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               );
             }
           });
-          
+
           _webSpeechRecognition!.onEnd.listen((event) {
             print('웹 음성 인식 종료');
-                         // 연속 모드를 위해 자동으로 다시 시작
-             if (_isListening && mounted) {
-               print('웹 연속 모드 - 음성 인식 자동 재시작');
-               Future.delayed(const Duration(milliseconds: 100), () {
+            // 연속 모드를 위해 자동으로 다시 시작
+            if (_isListening && mounted) {
+              print('웹 연속 모드 - 음성 인식 자동 재시작');
+              Future.delayed(const Duration(milliseconds: 100), () {
                 if (_isListening && mounted && _webSpeechRecognition != null) {
                   try {
                     _webSpeechRecognition!.start();
@@ -1756,33 +1352,34 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               });
             }
           });
-          
+
           _webSpeechAvailable = true;
           _speechAvailable = true;
           print('웹 음성 인식 초기화 완료!');
-          
+
           // 초기화 성공 메시지 제거 (팝업 없이 조용히 처리)
         }
-              } else {
-          print('Web Speech API를 지원하지 않는 브라우저');
-          _webSpeechAvailable = false;
-          _speechAvailable = false;
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('이 브라우저는 음성 인식을 지원하지 않습니다. Chrome, Edge, 또는 Safari를 사용해주세요.'),
-                duration: Duration(seconds: 4),
-                backgroundColor: Color(0xFFCE9178),
-              ),
-            );
-          }
+      } else {
+        print('Web Speech API를 지원하지 않는 브라우저');
+        _webSpeechAvailable = false;
+        _speechAvailable = false;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  '이 브라우저는 음성 인식을 지원하지 않습니다. Chrome, Edge, 또는 Safari를 사용해주세요.'),
+              duration: Duration(seconds: 4),
+              backgroundColor: Color(0xFFCE9178),
+            ),
+          );
         }
+      }
     } catch (e) {
       print('웹 음성 인식 초기화 오류: $e');
       _webSpeechAvailable = false;
       _speechAvailable = false;
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1794,14 +1391,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       }
     }
   }
-  
+
   // 모바일 전용 음성 인식 초기화
   Future<void> _initMobileSpeech() async {
     print('모바일 음성 인식 초기화 시작...');
     try {
       _speech = stt.SpeechToText();
       print('SpeechToText 객체 생성 완료');
-      
+
       _speechEnabled = await _speech.initialize(
         onStatus: (val) {
           print('음성 인식 상태 변경: $val');
@@ -1819,13 +1416,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         },
         debugLogging: true, // 디버깅 로그 활성화
       );
-      
+
       _speechAvailable = _speechEnabled;
       print('모바일 음성 인식 초기화 완료 - 사용 가능: $_speechAvailable');
-      
+
       if (!_speechAvailable) {
         print('경고: 음성 인식을 사용할 수 없습니다. 권한을 확인해주세요.');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1840,7 +1437,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('모바일 음성 인식 초기화 중 오류: $e');
       _speechAvailable = false;
       _speechEnabled = false;
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1856,8 +1453,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 음성 인식 시작
   void _startListening() async {
     print('음성 인식 시작 버튼 클릭됨');
-    print('현재 상태 - _speechEnabled: $_speechEnabled, _speechAvailable: $_speechAvailable');
-    
+    print(
+        '현재 상태 - _speechEnabled: $_speechEnabled, _speechAvailable: $_speechAvailable');
+
     // 음성 인식 시작 시 처리 플래그 및 카운터 리셋
     _isSpeechProcessing = false;
     _speechProcessCount = 0;
@@ -1866,11 +1464,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     _processedTexts.clear(); // 처리된 텍스트 집합 초기화
     _recentlyProcessedNumbers.clear(); // 처리된 숫자 집합 초기화
     _lastLineDrawTime = null;
-    
+
     if (!_speechAvailable) {
       print('음성 인식을 사용할 수 없음 - 재초기화 시도');
       await _initSpeech();
-      
+
       if (!_speechAvailable) {
         print('재초기화 후에도 음성 인식 사용 불가');
         if (mounted) {
@@ -1885,7 +1483,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         return;
       }
     }
-    
+
     if (kIsWeb) {
       await _startWebListening();
     } else {
@@ -1898,29 +1496,30 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     print('웹 음성 인식 시작 중...');
     print('PWA 모드: ${AppVersion.isPWA}');
     print('현재 레이아웃: $layoutMode');
-    
+
     try {
       // 모든 플랫폼에서 마이크 권한 요청 (iPad PWA 포함)
       final isIPadPWA = AppVersion.isPWA && isTablet;
-      
+
       if (isIPadPWA) {
         print('아이패드 PWA 모드 - 마이크 권한 요청 시작');
       }
-      
+
       try {
         // 권한 요청 전에 webkitSpeechRecognition 가용성 확인
         if (isIPadPWA) {
-          final webkitAvailable = js.context.callMethod('eval', [
-            'typeof webkitSpeechRecognition !== "undefined"'
-          ]) as bool;
+          final webkitAvailable = js.context.callMethod(
+                  'eval', ['typeof webkitSpeechRecognition !== "undefined"'])
+              as bool;
           print('iPad PWA webkitSpeechRecognition 가용성: $webkitAvailable');
-          
+
           if (!webkitAvailable) {
             throw Exception('iPad PWA에서 음성인식 API를 사용할 수 없습니다.');
           }
         }
-        
-        final mediaStream = await html.window.navigator.mediaDevices?.getUserMedia({
+
+        final mediaStream =
+            await html.window.navigator.mediaDevices?.getUserMedia({
           'audio': {
             'echoCancellation': true,
             'noiseSuppression': false, // 노이즈 억제 끄기로 감도 향상
@@ -1930,7 +1529,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           },
         });
         print('마이크 권한 허용됨 (감도 향상 설정)');
-        
+
         // iPad PWA에서는 스트림을 더 오래 유지
         if (mediaStream != null) {
           final delay = isIPadPWA ? 500 : 100;
@@ -1941,7 +1540,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       } catch (e) {
         print('마이크 권한 요청 실패: $e');
-        
+
         if (isIPadPWA) {
           // iPad PWA에서 권한 실패 시 명확한 안내
           if (mounted) {
@@ -1959,9 +1558,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           throw Exception('iPad PWA 마이크 권한 거부됨');
         }
       }
-      
+
       final userAgent = html.window.navigator.userAgent;
-      
+
       // Safari에서는 webkit 접두사 사용
       if (userAgent.contains('Safari') && !userAgent.contains('Chrome')) {
         print('Safari에서 webkit 음성 인식 시작');
@@ -1969,15 +1568,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       } else if (_webSpeechRecognition != null && _webSpeechAvailable) {
         print('표준 웹 음성 인식 시작');
         _webSpeechRecognition!.start();
-        
+
         setState(() {
           _isListening = true;
           _recognizedText = '';
           _lastWords = '';
         });
-        
+
         print('웹 음성 인식 시작됨 - 상태: $_isListening');
-        
+
         // 음성 인식 시작 메시지 제거 (팝업 없이 조용히 처리)
       } else {
         print('웹 음성 인식 객체가 없음');
@@ -1988,7 +1587,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       setState(() {
         _isListening = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2000,24 +1599,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       }
     }
   }
-  
+
   // Safari 전용 음성 인식 시작
   Future<void> _startSafariListening() async {
     print('Safari webkit 음성 인식 시작');
     print('PWA 모드: ${AppVersion.isPWA}');
-    
+
     try {
       // 아이패드 PWA에서만 추가 권한 확인
       final isIPadPWA = AppVersion.isPWA && isTablet;
-      
+
       if (isIPadPWA) {
         print('아이패드 PWA 모드 - 음성인식 권한 확인');
-        
+
         // 마이크 권한 확인 (아이패드 PWA에서는 필수)
         try {
-          final permissionStatus = await html.window.navigator.permissions?.query({'name': 'microphone'});
+          final permissionStatus = await html.window.navigator.permissions
+              ?.query({'name': 'microphone'});
           print('아이패드 PWA 마이크 권한 상태: ${permissionStatus?.state}');
-          
+
           if (permissionStatus?.state == 'denied') {
             throw Exception('마이크 권한이 거부되었습니다.');
           }
@@ -2026,24 +1626,24 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           // 권한 확인 실패해도 계속 진행
         }
       }
-      
+
       // iPad PWA에서 특별한 처리가 필요한지 확인
       if (isIPadPWA) {
         print('iPad PWA 모드 - Safari 음성인식 특별 처리');
-        
+
         // PWA에서 권한 재확인
         try {
-          final permissionResult = await html.window.navigator.permissions?.query({
-            'name': 'microphone'
-          });
+          final permissionResult = await html.window.navigator.permissions
+              ?.query({'name': 'microphone'});
           print('iPad PWA 현재 마이크 권한 상태: ${permissionResult?.state}');
         } catch (e) {
           print('권한 상태 확인 실패: $e');
         }
       }
-      
+
       // JavaScript 코드를 직접 실행하여 음성 인식 처리
-      js.context.callMethod('eval', ['''
+      js.context.callMethod('eval', [
+        '''
         try {
           // PWA 모드에서 webkitSpeechRecognition 생성 시도
           if (typeof webkitSpeechRecognition === 'undefined') {
@@ -2123,32 +1723,34 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         window.safariSpeechRecognition.onaudiostart = function(event) {
           console.log('Safari 오디오 입력 시작');
         };
-      ''']);
-      
-             // Dart 콜백 함수들 등록
-       js.context['dartSafariSpeechResult'] = js.allowInterop((String transcript, bool isFinal) {
-         print('Dart 콜백 - Safari 음성 결과: $transcript, 최종: $isFinal');
-         
-         setState(() {
-           _recognizedText = transcript;
-           _lastWords = transcript;
-         });
-         
-         // 최종 결과만 처리하여 중복 방지
-         if (isFinal) {
-           print('Safari 최종 결과 처리 시작');
-           _processRecognizedText(transcript);
-           // 연속 모드이므로 음성 인식을 중지하지 않음
-           print('Safari 연속 모드 - 음성 인식 계속 유지');
-         } else {
-           // 중간 결과는 UI 업데이트만
-           print('Safari 중간 결과: $transcript (UI 업데이트만)');
-         }
-       });
-      
+      '''
+      ]);
+
+      // Dart 콜백 함수들 등록
+      js.context['dartSafariSpeechResult'] =
+          js.allowInterop((String transcript, bool isFinal) {
+        print('Dart 콜백 - Safari 음성 결과: $transcript, 최종: $isFinal');
+
+        setState(() {
+          _recognizedText = transcript;
+          _lastWords = transcript;
+        });
+
+        // 최종 결과만 처리하여 중복 방지
+        if (isFinal) {
+          print('Safari 최종 결과 처리 시작');
+          _processRecognizedText(transcript);
+          // 연속 모드이므로 음성 인식을 중지하지 않음
+          print('Safari 연속 모드 - 음성 인식 계속 유지');
+        } else {
+          // 중간 결과는 UI 업데이트만
+          print('Safari 중간 결과: $transcript (UI 업데이트만)');
+        }
+      });
+
       js.context['dartSafariSpeechError'] = js.allowInterop((String error) {
         print('Dart 콜백 - Safari 음성 오류: $error');
-        
+
         // aborted 오류 처리
         if (error == 'aborted') {
           print('Safari 음성 인식이 중단됨 (정상 종료 또는 권한 문제)');
@@ -2158,18 +1760,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           // continuous=false 모드에서 stop() 호출 시 aborted는 정상 동작
           return;
         }
-        
+
         // no-speech 오류는 무시
         if (error == 'no-speech') {
           print('Safari 음성이 감지되지 않음 - 정상 동작');
           return;
         }
-        
+
         // 기타 오류 처리
         setState(() {
           _isListening = false;
         });
-        
+
         if (mounted && error != 'not-allowed') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -2180,16 +1782,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           );
         }
       });
-      
+
       js.context['dartSafariSpeechEnd'] = js.allowInterop(() {
         print('Dart 콜백 - Safari 음성 인식 종료');
-                 // 연속 모드를 위해 자동으로 다시 시작
-         if (_isListening && mounted) {
-           print('Safari 연속 모드 - 음성 인식 자동 재시작');
-           Future.delayed(const Duration(milliseconds: 100), () {
+        // 연속 모드를 위해 자동으로 다시 시작
+        if (_isListening && mounted) {
+          print('Safari 연속 모드 - 음성 인식 자동 재시작');
+          Future.delayed(const Duration(milliseconds: 100), () {
             if (_isListening && mounted) {
               try {
-                js.context.callMethod('eval', ['window.safariSpeechRecognition && window.safariSpeechRecognition.start();']);
+                js.context.callMethod('eval', [
+                  'window.safariSpeechRecognition && window.safariSpeechRecognition.start();'
+                ]);
               } catch (e) {
                 print('Safari 음성 인식 재시작 실패: $e');
                 setState(() {
@@ -2204,7 +1808,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           });
         }
       });
-      
+
       js.context['dartSafariSpeechStart'] = js.allowInterop(() {
         print('Dart 콜백 - Safari 음성 인식 시작');
         setState(() {
@@ -2213,31 +1817,31 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           _lastWords = '';
         });
       });
-      
+
       // 에러 체크
       final creationError = js.context['safariSpeechRecognitionError'];
       if (creationError != null) {
         print('Safari 음성인식 생성 오류 감지: $creationError');
         throw Exception('Safari 음성인식 생성 실패: $creationError');
       }
-      
+
       // 음성 인식 시작
-      final hasRecognition = js.context.callMethod('eval', [
-        'window.safariSpeechRecognition != null'
-      ]) as bool;
-      
+      final hasRecognition = js.context.callMethod(
+          'eval', ['window.safariSpeechRecognition != null']) as bool;
+
       if (!hasRecognition) {
         throw Exception('Safari 음성인식 객체가 생성되지 않았습니다.');
       }
-      
+
       // iPad PWA에서는 약간의 지연 후 시작
       if (isIPadPWA) {
         print('iPad PWA - 음성인식 시작 전 지연 (권한 안정화)');
         await Future.delayed(const Duration(milliseconds: 300));
       }
-      
+
       // 음성인식 시작 시도
-      js.context.callMethod('eval', ['''
+      js.context.callMethod('eval', [
+        '''
         try {
           window.safariSpeechRecognition.start();
           console.log('Safari 음성인식 start() 호출 성공');
@@ -2246,15 +1850,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           window.safariStartError = e.toString();
           throw e;
         }
-      ''']);
-      
-      print('Safari 음성 인식 시작 요청 완료');
-      
-      // Safari 음성 인식 시작 메시지 제거 (팝업 없이 조용히 처리)
+      '''
+      ]);
 
+      print('Safari 음성 인식 시작 요청 완료');
+
+      // Safari 음성 인식 시작 메시지 제거 (팝업 없이 조용히 처리)
     } catch (e) {
       print('Safari 음성 인식 시작 실패: $e');
-      
+
       // 시작 에러 상세 정보 확인
       try {
         final startError = js.context['safariStartError'];
@@ -2264,14 +1868,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       } catch (e2) {
         print('에러 정보 확인 실패: $e2');
       }
-      
+
       setState(() {
         _isListening = false;
       });
-      
+
       if (mounted) {
         String errorMessage = 'Safari 음성 인식 시작 실패: $e';
-        
+
         // 아이패드 PWA 모드에서만 특별한 안내 메시지
         final isIPadPWA = AppVersion.isPWA && isTablet;
         if (isIPadPWA) {
@@ -2287,7 +1891,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               '방법 3:\n'
               '• Safari 브라우저에서 hvl.kr 직접 사용';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -2302,7 +1906,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 모바일 전용 음성 인식 시작
   Future<void> _startMobileListening() async {
     print('모바일 음성 인식 시작 중...');
-    
+
     try {
       print('음성 인식 listen() 호출 시작...');
       await _speech.listen(
@@ -2312,7 +1916,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             _lastWords = val.recognizedWords;
             _recognizedText = val.recognizedWords;
             print('음성 인식 결과 업데이트: $_recognizedText');
-            
+
             // 최종 결과만 처리하여 중복 방지
             if (val.finalResult) {
               print('최종 결과 처리 시작');
@@ -2341,12 +1945,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           print('음성 레벨: $level');
         },
       );
-      
+
       print('음성 인식 listen() 호출 완료 - 상태를 listening으로 변경');
       setState(() {
         _isListening = true;
       });
-      
     } catch (e) {
       print('모바일 음성 인식 시작 중 오류: $e');
       setState(() {
@@ -2358,16 +1961,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 음성 인식 중지
   void _stopListening() async {
     print('음성 인식 중지 버튼 클릭됨');
-    
+
     try {
       if (kIsWeb) {
         final userAgent = html.window.navigator.userAgent;
-        
+
         // Safari에서는 webkit 객체 사용
         if (userAgent.contains('Safari') && !userAgent.contains('Chrome')) {
           print('Safari 음성 인식 중지');
           try {
-            js.context.callMethod('eval', ['window.safariSpeechRecognition && window.safariSpeechRecognition.stop();']);
+            js.context.callMethod('eval', [
+              'window.safariSpeechRecognition && window.safariSpeechRecognition.stop();'
+            ]);
           } catch (e) {
             print('Safari 음성 인식 중지 실패: $e');
           }
@@ -2379,13 +1984,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         print('모바일 음성 인식 중지');
         await _speech.stop();
       }
-      
+
       setState(() {
         _isListening = false;
       });
-      
+
       print('음성 인식 중지됨');
-      
     } catch (e) {
       print('음성 인식 중지 중 오류: $e');
       setState(() {
@@ -2397,75 +2001,81 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 빠른 음성 처리 (중간 결과용) - 강화된 중복 방지
   void _processRecognizedTextFast(String text) {
     print('빠른 음성 텍스트 처리: $text');
-    
+
     // 기본 중복 방지
     if (_isSpeechProcessing) {
       print('음성 처리 중 - 빠른 처리 무시');
       return;
     }
-    
+
     final now = DateTime.now();
     final trimmedText = text.trim();
-    
+
     // 이미 처리된 텍스트인지 확인
     if (_processedTexts.contains(trimmedText)) {
       print('이미 처리된 텍스트 - 무시: $trimmedText');
       return;
     }
-    
+
     // 최근 선 그리기 후 너무 빠른 호출 방지 (1초 이내)
-    if (_lastLineDrawTime != null && 
+    if (_lastLineDrawTime != null &&
         now.difference(_lastLineDrawTime!).inMilliseconds < 500) {
-      print('최근 선 그리기 후 500ms 이내 - 빠른 처리 무시 (${now.difference(_lastLineDrawTime!).inMilliseconds}ms)');
+      print(
+          '최근 선 그리기 후 500ms 이내 - 빠른 처리 무시 (${now.difference(_lastLineDrawTime!).inMilliseconds}ms)');
       return;
     }
-    
+
     // 시간 간격 기반 분리 처리 (성능 최적화: 800ms → 400ms)
     final speechGapThreshold = 400; // 반응 속도 개선을 위해 더 단축
     bool isNewSpeechSession = false;
-    
-    if (_lastSpeechProcessTime == null || 
-        now.difference(_lastSpeechProcessTime!).inMilliseconds >= speechGapThreshold) {
+
+    if (_lastSpeechProcessTime == null ||
+        now.difference(_lastSpeechProcessTime!).inMilliseconds >=
+            speechGapThreshold) {
       isNewSpeechSession = true;
-      print('새로운 음성 세션 시작 (${_lastSpeechProcessTime == null ? '처음' : '${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms 경과'})');
+      print(
+          '새로운 음성 세션 시작 (${_lastSpeechProcessTime == null ? '처음' : '${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms 경과'})');
       // 새 세션 시작 시 처리된 텍스트 집합 초기화
       _processedTexts.clear();
     }
-    
+
     // 새로운 세션이 아니고 동일한 텍스트면 무시
     if (!isNewSpeechSession && _lastProcessedText == trimmedText) {
       print('동일 세션 내 동일한 텍스트 중복 처리 방지: $text');
       return;
     }
-    
+
     // 새로운 세션이 아니고 너무 빠른 호출이면 무시 (성능 최적화: 400ms → 200ms)
-    if (!isNewSpeechSession && _lastSpeechProcessTime != null && 
+    if (!isNewSpeechSession &&
+        _lastSpeechProcessTime != null &&
         now.difference(_lastSpeechProcessTime!).inMilliseconds < 200) {
-      print('동일 세션 내 빠른 처리 200ms 이내 중복 호출 무시 (${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms)');
+      print(
+          '동일 세션 내 빠른 처리 200ms 이내 중복 호출 무시 (${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms)');
       return;
     }
-    
+
     // 텍스트 길이 검증 (감도 향상을 위해 최소 길이 줄임)
     if (trimmedText.length < 1 || trimmedText.length > 30) {
       print('텍스트 길이 부적절 - 무시: ${trimmedText.length}');
       return;
     }
-    
+
     // 빠른 숫자 검증 - 숫자가 포함되어 있는지 먼저 확인
-    if (!RegExp(r'\d').hasMatch(trimmedText) && 
-        !RegExp(r'[일이삼사오육칠팔구십백천만영공하나둘셋넷다섯여섯일곱여덟아홉열스무서른마흔쉰예순일흔여든아흔]').hasMatch(trimmedText)) {
+    if (!RegExp(r'\d').hasMatch(trimmedText) &&
+        !RegExp(r'[일이삼사오육칠팔구십백천만영공하나둘셋넷다섯여섯일곱여덟아홉열스무서른마흔쉰예순일흔여든아흔]')
+            .hasMatch(trimmedText)) {
       print('숫자 관련 텍스트가 없음 - 빠른 무시: $trimmedText');
       return;
     }
-    
+
     // 한국어 숫자 단어를 숫자로 변환
     String convertedText = _convertKoreanNumbersToDigits(trimmedText);
     print('빠른 처리 - 변환된 텍스트: $convertedText');
-    
+
     // 숫자 추출
     RegExp numberRegex = RegExp(r'\b(\d+(?:\.\d+)?)\b');
     final matches = numberRegex.allMatches(convertedText);
-    
+
     if (matches.isNotEmpty) {
       // 유효한 숫자만 선택 (1-10000 범위)
       double? bestNumber;
@@ -2478,46 +2088,47 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           }
         }
       }
-      
+
       if (bestNumber != null) {
         // 최근에 처리된 숫자인지 확인
         if (_recentlyProcessedNumbers.contains(bestNumber)) {
           print('빠른 처리 - 최근 처리된 숫자 중복 방지: $bestNumber');
           return;
         }
-        
+
         print('빠른 처리 - 추출된 숫자: $bestNumber (새로운 세션: $isNewSpeechSession)');
-        
+
         setState(() {
           _isSpeechProcessing = true;
           _isVoiceProcessing = true; // UI 로딩 상태 활성화
         });
-        
+
         _lastProcessedText = trimmedText;
         _lastSpeechProcessTime = now;
         _lastLineDrawTime = now; // 선 그리기 시간 기록
-        
+
         // 처리된 텍스트와 숫자를 집합에 추가
         _processedTexts.add(trimmedText);
         if (_processedTexts.length > 10) {
           _processedTexts.clear();
           _processedTexts.add(trimmedText);
         }
-        
+
         _recentlyProcessedNumbers.add(bestNumber);
         if (_recentlyProcessedNumbers.length > 5) {
           _recentlyProcessedNumbers.clear();
           _recentlyProcessedNumbers.add(bestNumber);
         }
-        
+
         // 1초 후 숫자 중복 방지 목록에서 제거
         Future.delayed(const Duration(seconds: 1), () {
           _recentlyProcessedNumbers.remove(bestNumber);
         });
-        
+
         // 선택된 선이 있다면 해당 선의 길이를 변경
         if (selectedLineIndex >= 0 && selectedLineIndex < lines.length) {
-          print('빠른 처리 - 선택된 선 길이 변경: 인덱스 $selectedLineIndex, 새 길이 $bestNumber');
+          print(
+              '빠른 처리 - 선택된 선 길이 변경: 인덱스 $selectedLineIndex, 새 길이 $bestNumber');
           _resizeSelectedLine(bestNumber);
         } else {
           print('빠른 처리 - 유효한 숫자로 선 그리기');
@@ -2529,11 +2140,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             drawLineWithDistance('Up', bestNumber);
           }
         }
-        
+
         // 성공 메시지 제거 (팝업 없이 조용히 처리)
-        
+
         // 자동 음성 모드 제거 - 사용자가 직접 음성 인식을 제어하도록 변경
-        
+
         // 즉시 처리 가능한 경우 지연 시간 더 단축 (200ms → 100ms)
         Future.delayed(const Duration(milliseconds: 100), () {
           setState(() {
@@ -2548,127 +2159,153 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 인식된 텍스트에서 숫자 추출 및 처리 - 강화된 중복 방지
   void _processRecognizedText(String text) {
     print('음성 텍스트 처리: $text');
-    
+
     // 중복 처리 방지 (플래그 기반)
     if (_isSpeechProcessing) {
       print('음성 처리 중 - 중복 호출 무시');
       return;
     }
-    
+
     final now = DateTime.now();
     final trimmedText = text.trim();
-    
+
     // 텍스트 길이 검증 (감도 향상)
     if (trimmedText.isEmpty || trimmedText.length > 40) {
       print('텍스트 길이 부적절 - 무시: ${trimmedText.length}');
       return;
     }
-    
+
     // 이미 처리된 텍스트인지 확인
     if (_processedTexts.contains(trimmedText)) {
       print('이미 처리된 텍스트 - 무시: $trimmedText');
       return;
     }
-    
+
     // 최근 선 그리기 후 너무 빠른 호출 방지 (성능 최적화: 500ms → 250ms)
-    if (_lastLineDrawTime != null && 
+    if (_lastLineDrawTime != null &&
         now.difference(_lastLineDrawTime!).inMilliseconds < 250) {
-      print('최근 선 그리기 후 250ms 이내 - 일반 처리 무시 (${now.difference(_lastLineDrawTime!).inMilliseconds}ms)');
+      print(
+          '최근 선 그리기 후 250ms 이내 - 일반 처리 무시 (${now.difference(_lastLineDrawTime!).inMilliseconds}ms)');
       return;
     }
-    
+
     // 시간 간격 기반 분리 처리 (성능 최적화: 800ms → 400ms)
     final speechGapThreshold = 400; // 반응 속도 개선을 위해 더 단축
     bool isNewSpeechSession = false;
-    
-    if (_lastSpeechProcessTime == null || 
-        now.difference(_lastSpeechProcessTime!).inMilliseconds >= speechGapThreshold) {
+
+    if (_lastSpeechProcessTime == null ||
+        now.difference(_lastSpeechProcessTime!).inMilliseconds >=
+            speechGapThreshold) {
       isNewSpeechSession = true;
-      print('새로운 음성 세션 시작 (${_lastSpeechProcessTime == null ? '처음' : '${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms 경과'})');
+      print(
+          '새로운 음성 세션 시작 (${_lastSpeechProcessTime == null ? '처음' : '${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms 경과'})');
       // 새 세션 시작 시 처리된 텍스트 집합 초기화
       _processedTexts.clear();
     }
-    
+
     // 새로운 세션이 아니고 동일한 텍스트면 무시
     if (!isNewSpeechSession && _lastProcessedText == trimmedText) {
       print('동일 세션 내 동일한 텍스트 중복 처리 방지: $trimmedText');
       return;
     }
-    
+
     // 새로운 세션이 아니고 너무 빠른 호출이면 무시 (성능 최적화: 500ms → 250ms)
-    if (!isNewSpeechSession && _lastSpeechProcessTime != null && 
+    if (!isNewSpeechSession &&
+        _lastSpeechProcessTime != null &&
         now.difference(_lastSpeechProcessTime!).inMilliseconds < 250) {
-      print('동일 세션 내 음성 처리 250ms 이내 중복 호출 무시 (${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms)');
+      print(
+          '동일 세션 내 음성 처리 250ms 이내 중복 호출 무시 (${now.difference(_lastSpeechProcessTime!).inMilliseconds}ms)');
       return;
     }
-    
+
     setState(() {
       _isSpeechProcessing = true;
       _isVoiceProcessing = true; // UI 로딩 상태 활성화
     });
-    
+
     _lastSpeechProcessTime = now;
     _lastProcessedText = trimmedText;
     _lastLineDrawTime = now; // 선 그리기 시간 기록
-    
+
     // 처리된 텍스트를 집합에 추가 (메모리 최적화: 최대 10개까지만 유지)
     _processedTexts.add(trimmedText);
     if (_processedTexts.length > 10) {
       _processedTexts.clear();
       _processedTexts.add(trimmedText);
     }
-    
+
     // 먼저 음성 명령 확인
     final lowerText = trimmedText.toLowerCase();
-    
+
     // 방향과 숫자가 함께 있는지 확인 (예: "오른쪽 200", "위로 300")
     String? detectedDirection;
     String remainingText = lowerText;
-    
+
     // 방향 패턴 검사
-    if (lowerText.contains('위') || lowerText.contains('위로') || lowerText.contains('위쪽')) {
+    if (lowerText.contains('위') ||
+        lowerText.contains('위로') ||
+        lowerText.contains('위쪽')) {
       detectedDirection = 'Up';
-      remainingText = lowerText.replaceAll('위쪽', '').replaceAll('위로', '').replaceAll('위', '').trim();
-    } else if (lowerText.contains('아래') || lowerText.contains('아래로') || lowerText.contains('아래쪽')) {
+      remainingText = lowerText
+          .replaceAll('위쪽', '')
+          .replaceAll('위로', '')
+          .replaceAll('위', '')
+          .trim();
+    } else if (lowerText.contains('아래') ||
+        lowerText.contains('아래로') ||
+        lowerText.contains('아래쪽')) {
       detectedDirection = 'Down';
-      remainingText = lowerText.replaceAll('아래쪽', '').replaceAll('아래로', '').replaceAll('아래', '').trim();
+      remainingText = lowerText
+          .replaceAll('아래쪽', '')
+          .replaceAll('아래로', '')
+          .replaceAll('아래', '')
+          .trim();
     } else if (lowerText.contains('왼쪽') || lowerText.contains('좌')) {
       detectedDirection = 'Left';
-      remainingText = lowerText.replaceAll('왼쪽으로', '').replaceAll('왼쪽', '').replaceAll('좌', '').trim();
+      remainingText = lowerText
+          .replaceAll('왼쪽으로', '')
+          .replaceAll('왼쪽', '')
+          .replaceAll('좌', '')
+          .trim();
     } else if (lowerText.contains('오른쪽') || lowerText.contains('우')) {
       detectedDirection = 'Right';
-      remainingText = lowerText.replaceAll('오른쪽으로', '').replaceAll('오른쪽', '').replaceAll('우', '').trim();
+      remainingText = lowerText
+          .replaceAll('오른쪽으로', '')
+          .replaceAll('오른쪽', '')
+          .replaceAll('우', '')
+          .trim();
     }
-    
+
     // 방향과 함께 숫자가 있는지 확인
     if (detectedDirection != null && remainingText.isNotEmpty) {
       // 남은 텍스트에서 숫자를 찾아보기
-      final processedRemainingText = _convertKoreanNumbersToDigits(remainingText);
+      final processedRemainingText =
+          _convertKoreanNumbersToDigits(remainingText);
       final numberRegex = RegExp(r'\b(\d+(?:\.\d+)?)\b');
       final matches = numberRegex.allMatches(processedRemainingText);
-      
+
       if (matches.isNotEmpty) {
         // 숫자가 있으면 방향 설정 후 숫자 처리
         print('방향과 숫자 동시 인식: 방향=$detectedDirection, 텍스트=$remainingText');
-        
+
         // 방향 설정
         onDirectionKey(detectedDirection);
-        
+
         // 잠시 후 숫자 처리를 위해 텍스트 재처리
         Future.delayed(const Duration(milliseconds: 100), () {
           // 숫자만 포함된 텍스트로 다시 처리
           _processRecognizedText(remainingText);
         });
-        
+
         setState(() {
           _isSpeechProcessing = false;
           _isVoiceProcessing = false;
         });
-        
+
         return;
       }
     }
-    
+
     // 창문 명령
     if (lowerText.contains('창문')) {
       print('음성 명령: 창문');
@@ -2677,11 +2314,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         final newOpeningType = pendingOpeningType == 'window' ? null : 'window';
         pendingOpeningType = newOpeningType;
         print('창문 모드 ${newOpeningType != null ? '활성화' : '비활성화'}');
-        
+
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       // 처리 완료 후 플래그 리셋
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
@@ -2691,7 +2328,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 점연결/대각선 명령
     if (lowerText.contains('점연결') || lowerText.contains('대각선')) {
       print('음성 명령: 점연결/대각선');
@@ -2699,11 +2336,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         // 점연결 모드 토글
         diagonalMode = !diagonalMode;
         print('점연결 모드 ${diagonalMode ? '활성화' : '비활성화'}');
-        
+
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       // 처리 완료 후 플래그 리셋
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
@@ -2713,19 +2350,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 취소/뒤로 명령
     if (lowerText.contains('취소') || lowerText.contains('뒤로')) {
       print('음성 명령: 취소/뒤로');
-      
+
       // 되돌리기 실행
       undo();
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       // 처리 완료 후 플래그 리셋
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
@@ -2735,7 +2372,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 원 명령
     if (lowerText == '원' || lowerText.contains('원 모드')) {
       print('음성 명령: 원');
@@ -2753,11 +2390,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           selectedGroupLines.clear();
         }
         print('원 모드 ${circleMode ? '활성화' : '비활성화'}');
-        
+
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       // 처리 완료 후 플래그 리셋
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
@@ -2767,17 +2404,17 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 방향키 명령
     if (lowerText == '위' || lowerText == '위로' || lowerText.contains('위쪽')) {
       print('음성 명령: 위');
       onDirectionKey('Up');
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
           _isSpeechProcessing = false;
@@ -2786,16 +2423,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     if (lowerText == '아래' || lowerText == '아래로' || lowerText.contains('아래쪽')) {
       print('음성 명령: 아래');
       onDirectionKey('Down');
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
           _isSpeechProcessing = false;
@@ -2804,16 +2441,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     if (lowerText == '왼쪽' || lowerText == '좌' || lowerText.contains('왼쪽으로')) {
       print('음성 명령: 왼쪽');
       onDirectionKey('Left');
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
           _isSpeechProcessing = false;
@@ -2822,16 +2459,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     if (lowerText == '오른쪽' || lowerText == '우' || lowerText.contains('오른쪽으로')) {
       print('음성 명령: 오른쪽');
       onDirectionKey('Right');
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
           _isSpeechProcessing = false;
@@ -2840,11 +2477,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 초기화 명령
-    if (lowerText.contains('초기화') || lowerText.contains('다시') || lowerText.contains('리셋')) {
+    if (lowerText.contains('초기화') ||
+        lowerText.contains('다시') ||
+        lowerText.contains('리셋')) {
       print('음성 명령: 초기화');
-      
+
       // 초기화 실행
       setState(() {
         lines.clear();
@@ -2865,15 +2504,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         showInlineInput = false;
         inlineController.clear();
       });
-      
+
       // Firebase 업데이트
       _updateFirebase();
-      
+
       setState(() {
         _isSpeechProcessing = false;
         _isVoiceProcessing = false;
       });
-      
+
       // 처리 완료 후 플래그 리셋
       Future.delayed(const Duration(milliseconds: 150), () {
         setState(() {
@@ -2883,15 +2522,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 한국어 숫자 단어를 숫자로 변환
     final processedText = _convertKoreanNumbersToDigits(trimmedText);
     print('변환된 텍스트: $processedText');
-    
+
     // 숫자 추출 (개선된 버전 - 더 정확한 패턴)
     final numberRegex = RegExp(r'\b(\d+(?:\.\d+)?)\b');
     final matches = numberRegex.allMatches(processedText);
-    
+
     if (matches.isNotEmpty) {
       // 유효한 숫자만 선택 (1-10000 범위)
       double? bestNumber;
@@ -2902,14 +2541,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           // 가장 적절한 숫자 선택 (10-500 범위 우선, 그 다음 1-10000)
           if (bestNumber == null) {
             bestNumber = number;
-          } else if (number >= 10 && number <= 500 && (bestNumber < 10 || bestNumber > 500)) {
+          } else if (number >= 10 &&
+              number <= 500 &&
+              (bestNumber < 10 || bestNumber > 500)) {
             bestNumber = number;
-          } else if (number >= 10 && number <= 500 && bestNumber >= 10 && bestNumber <= 500) {
+          } else if (number >= 10 &&
+              number <= 500 &&
+              bestNumber >= 10 &&
+              bestNumber <= 500) {
             bestNumber = number > bestNumber ? number : bestNumber;
           }
         }
       }
-      
+
       if (bestNumber != null) {
         // 최근에 처리된 숫자인지 확인
         if (_recentlyProcessedNumbers.contains(bestNumber)) {
@@ -2920,13 +2564,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           });
           return;
         }
-        
+
         // 마지막 처리된 숫자가 현재 숫자에 포함되는지 확인 (예: 1000 < 1300)
-        if (_lastProcessedNumber != null && 
-            DateTime.now().difference(_lastSpeechProcessTime ?? DateTime.now()).inMilliseconds < 1000) {
+        if (_lastProcessedNumber != null &&
+            DateTime.now()
+                    .difference(_lastSpeechProcessTime ?? DateTime.now())
+                    .inMilliseconds <
+                1000) {
           // 천(1000) -> 천삼백(1300)처럼 작은 숫자가 큰 숫자에 포함되는 경우
-          if (bestNumber > _lastProcessedNumber! && 
-              _lastProcessedNumber == 1000 && bestNumber >= 1000 && bestNumber < 2000) {
+          if (bestNumber > _lastProcessedNumber! &&
+              _lastProcessedNumber == 1000 &&
+              bestNumber >= 1000 &&
+              bestNumber < 2000) {
             print('천 단위 포함 관계 감지 - 이전: $_lastProcessedNumber, 현재: $bestNumber');
             // 이전 선을 삭제하고 새로운 선으로 대체
             if (lines.isNotEmpty) {
@@ -2936,8 +2585,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           }
           // 백(100) -> 백XX처럼 작은 숫자가 큰 숫자에 포함되는 경우
-          else if (bestNumber > _lastProcessedNumber! && 
-                   _lastProcessedNumber == 100 && bestNumber >= 100 && bestNumber < 200) {
+          else if (bestNumber > _lastProcessedNumber! &&
+              _lastProcessedNumber == 100 &&
+              bestNumber >= 100 &&
+              bestNumber < 200) {
             print('백 단위 포함 관계 감지 - 이전: $_lastProcessedNumber, 현재: $bestNumber');
             if (lines.isNotEmpty) {
               setState(() {
@@ -2946,24 +2597,24 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           }
         }
-        
+
         print('추출된 숫자: $bestNumber');
-        
+
         // 처리된 숫자 추가
         _recentlyProcessedNumbers.add(bestNumber);
         if (_recentlyProcessedNumbers.length > 5) {
           _recentlyProcessedNumbers.clear();
           _recentlyProcessedNumbers.add(bestNumber);
         }
-        
+
         // 1초 후 숫자 중복 방지 목록에서 제거
         Future.delayed(const Duration(seconds: 1), () {
           _recentlyProcessedNumbers.remove(bestNumber);
         });
-        
+
         // 마지막 처리된 숫자 업데이트
         _lastProcessedNumber = bestNumber;
-        
+
         // 선택된 선이 있다면 해당 선의 길이를 변경
         if (selectedLineIndex >= 0 && selectedLineIndex < lines.length) {
           print('선택된 선 길이 변경: 인덱스 $selectedLineIndex, 새 길이 $bestNumber');
@@ -2978,7 +2629,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               TextPosition(offset: inlineController.text.length),
             );
           });
-          
+
           // 자동으로 선 그리기 실행
           WidgetsBinding.instance.addPostFrameCallback((_) {
             confirmInlineInput();
@@ -2986,20 +2637,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         } else {
           // 인라인 입력이 비활성화되어 있다면 자동으로 마지막 방향으로 선 그리기
           print('인라인 입력 비활성화 상태 - 자동으로 마지막 방향으로 선 그리기');
-          
+
           // 마지막 방향이 있다면 해당 방향으로 선 그리기
           if (lastDirection != null) {
             print('마지막 방향: $lastDirection 으로 $bestNumber 픽셀 선 그리기');
-            
+
             // 마지막 방향으로 선 그리기
             drawLineWithDistance(lastDirection!, bestNumber);
-            
+
             // 성공 메시지 제거 (팝업 없이 조용히 처리)
           } else {
             // 마지막 방향이 없다면 위쪽으로 기본 설정
             print('마지막 방향이 없음 - 위쪽으로 기본 설정하여 선 그리기');
             drawLineWithDistance('Up', bestNumber);
-            
+
             // 성공 메시지 제거 (팝업 없이 조용히 처리)
           }
         }
@@ -3017,11 +2668,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         );
       }
     }
-    
+
     _speechProcessCount++;
-    
+
     // 자동 음성 모드 제거 - 사용자가 직접 음성 인식을 제어하도록 변경
-    
+
     // 처리 완료 후 플래그 리셋 (성능 최적화: 300ms → 150ms)
     Future.delayed(const Duration(milliseconds: 150), () {
       setState(() {
@@ -3035,17 +2686,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   // 한국어 숫자 단어를 숫자로 변환 (개선된 버전)
   String _convertKoreanNumbersToDigits(String text) {
     print('원본 텍스트: $text');
-    
+
     // 텍스트를 소문자로 변환하고 불필요한 문자 제거
-    String processedText = text.toLowerCase()
+    String processedText = text
+        .toLowerCase()
         .replaceAll(RegExp(r'[^\w가-힣]'), '') // 특수문자 제거
         .replaceAll(' ', '');
-    
+
     // 음성 인식 오류 패턴 수정 (예: "1003백" -> "천삼백")
-    processedText = processedText.replaceAllMapped(RegExp(r'(\d+)([백천만])'), (match) {
+    processedText =
+        processedText.replaceAllMapped(RegExp(r'(\d+)([백천만])'), (match) {
       final number = match.group(1)!;
       final unit = match.group(2)!;
-      
+
       // 1003백 -> 천삼백
       if (number == '1003' && unit == '백') return '천삼백';
       if (number == '1004' && unit == '백') return '천사백';
@@ -3054,12 +2707,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       if (number == '1007' && unit == '백') return '천칠백';
       if (number == '1008' && unit == '백') return '천팔백';
       if (number == '1009' && unit == '백') return '천구백';
-      
+
       return match.group(0)!;
     });
-    
+
     print('전처리된 텍스트: $processedText');
-    
+
     // 복합 숫자 먼저 처리 (긴 단어부터 - 순서 중요)
     final complexNumbers = {
       // 1000 이상 (천 단위 추가)
@@ -3067,47 +2720,47 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       '구천팔백구십': '9890', '구천팔백': '9800', '구천칠백': '9700',
       '구천육백': '9600', '구천오백': '9500', '구천사백': '9400',
       '구천삼백': '9300', '구천이백': '9200', '구천일백': '9100', '구천': '9000',
-      
+
       '팔천구백구십구': '8999', '팔천구백구십': '8990', '팔천구백': '8900',
       '팔천팔백': '8800', '팔천칠백': '8700', '팔천육백': '8600',
       '팔천오백': '8500', '팔천사백': '8400', '팔천삼백': '8300',
       '팔천이백': '8200', '팔천일백': '8100', '팔천': '8000',
-      
+
       '칠천구백': '7900', '칠천팔백': '7800', '칠천칠백': '7700',
       '칠천육백': '7600', '칠천오백': '7500', '칠천사백': '7400',
       '칠천삼백': '7300', '칠천이백': '7200', '칠천일백': '7100', '칠천': '7000',
-      
+
       '육천구백': '6900', '육천팔백': '6800', '육천칠백': '6700',
       '육천육백': '6600', '육천오백': '6500', '육천사백': '6400',
       '육천삼백': '6300', '육천이백': '6200', '육천일백': '6100', '육천': '6000',
-      
+
       '오천구백': '5900', '오천팔백': '5800', '오천칠백': '5700',
       '오천육백': '5600', '오천오백': '5500', '오천사백': '5400',
       '오천삼백': '5300', '오천이백': '5200', '오천일백': '5100', '오천': '5000',
-      
+
       '사천구백': '4900', '사천팔백': '4800', '사천칠백': '4700',
       '사천육백': '4600', '사천오백': '4500', '사천사백': '4400',
       '사천삼백': '4300', '사천이백': '4200', '사천일백': '4100', '사천': '4000',
-      
+
       '삼천구백': '3900', '삼천팔백': '3800', '삼천칠백': '3700',
       '삼천육백': '3600', '삼천오백': '3500', '삼천사백': '3400',
       '삼천삼백': '3300', '삼천이백': '3200', '삼천일백': '3100', '삼천': '3000',
-      
+
       '이천구백': '2900', '이천팔백': '2800', '이천칠백': '2700',
       '이천육백': '2600', '이천오백': '2500', '이천사백': '2400',
       '이천삼백': '2300', '이천이백': '2200', '이천일백': '2100', '이천': '2000',
-      
+
       '일천구백구십구': '1999', '일천구백구십': '1990', '일천구백': '1900',
       '일천팔백구십': '1890', '일천팔백': '1800', '일천칠백': '1700',
       '일천육백': '1600', '일천오백': '1500', '일천사백': '1400',
       '일천삼백': '1300', '일천이백': '1200', '일천일백': '1100', '일천': '1000',
-      
+
       // 천 단위 (간단한 형태)
       '천구백구십구': '1999', '천구백구십': '1990', '천구백': '1900',
       '천팔백구십': '1890', '천팔백': '1800', '천칠백': '1700',
       '천육백': '1600', '천오백': '1500', '천사백': '1400',
       '천삼백': '1300', '천이백': '1200', '천일백': '1100', '천': '1000',
-      
+
       // 100 이상 (기존)
       '구백구십구': '999', '구백구십': '990', '구백': '900',
       '팔백구십': '890', '팔백': '800',
@@ -3119,87 +2772,87 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       '이백구십': '290', '이백': '200',
       '일백구십': '190', '일백': '100',
       '백구십': '190', '백': '100',
-      
+
       // 90-99
       '아흔아홉': '99', '아흔여덟': '98', '아흔일곱': '97', '아흔여섯': '96',
       '아흔다섯': '95', '아흔넷': '94', '아흔셋': '93', '아흔둘': '92',
       '아흔하나': '91', '아흔': '90',
-      
+
       // 80-89
       '여든아홉': '89', '여든여덟': '88', '여든일곱': '87', '여든여섯': '86',
       '여든다섯': '85', '여든넷': '84', '여든셋': '83', '여든둘': '82',
       '여든하나': '81', '여든': '80',
-      
+
       // 70-79
       '일흔아홉': '79', '일흔여덟': '78', '일흔일곱': '77', '일흔여섯': '76',
       '일흔다섯': '75', '일흔넷': '74', '일흔셋': '73', '일흔둘': '72',
       '일흔하나': '71', '일흔': '70',
-      
+
       // 60-69
       '예순아홉': '69', '예순여덟': '68', '예순일곱': '67', '예순여섯': '66',
       '예순다섯': '65', '예순넷': '64', '예순셋': '63', '예순둘': '62',
       '예순하나': '61', '예순': '60',
-      
+
       // 50-59
       '쉰아홉': '59', '쉰여덟': '58', '쉰일곱': '57', '쉰여섯': '56',
       '쉰다섯': '55', '쉰넷': '54', '쉰셋': '53', '쉰둘': '52',
       '쉰하나': '51', '쉰': '50',
-      
+
       // 40-49
       '마흔아홉': '49', '마흔여덟': '48', '마흔일곱': '47', '마흔여섯': '46',
       '마흔다섯': '45', '마흔넷': '44', '마흔셋': '43', '마흔둘': '42',
       '마흔하나': '41', '마흔': '40',
-      
+
       // 30-39
       '서른아홉': '39', '서른여덟': '38', '서른일곱': '37', '서른여섯': '36',
       '서른다섯': '35', '서른넷': '34', '서른셋': '33', '서른둘': '32',
       '서른하나': '31', '서른': '30',
-      
+
       // 20-29
       '스무아홉': '29', '스무여덟': '28', '스무일곱': '27', '스무여섯': '26',
       '스무다섯': '25', '스무넷': '24', '스무셋': '23', '스무둘': '22',
       '스무하나': '21', '스무': '20',
-      
+
       // 10-19 (한자어)
       '십구': '19', '십팔': '18', '십칠': '17', '십육': '16', '십오': '15',
       '십사': '14', '십삼': '13', '십이': '12', '십일': '11', '십': '10',
-      
+
       // 기타 단위
       '열': '10',
     };
-    
+
     // 복합 숫자 변환 (긴 것부터)
     final sortedComplexNumbers = complexNumbers.entries.toList()
       ..sort((a, b) => b.key.length.compareTo(a.key.length));
-    
+
     for (final entry in sortedComplexNumbers) {
       processedText = processedText.replaceAll(entry.key, entry.value);
     }
-    
+
     // 기본 숫자 변환
     final basicNumbers = {
       // 한국어 숫자 (고유어)
       '아홉': '9', '여덟': '8', '일곱': '7', '여섯': '6', '다섯': '5',
       '넷': '4', '셋': '3', '둘': '2', '하나': '1', '영': '0',
-      
+
       // 한국어 숫자 (한자어)
       '구': '9', '팔': '8', '칠': '7', '육': '6', '오': '5',
       '사': '4', '삼': '3', '이': '2', '일': '1', '공': '0',
-      
+
       // 자주 잘못 인식되는 변형들
       '나인': '9', '에이트': '8', '세븐': '7', '식스': '6', '파이브': '5',
       '포': '4', '쓰리': '3', '투': '2', '원': '1', '제로': '0',
-      
+
       // 발음 변형
       '구우': '9', '팔팔': '8', '칠칠': '7', '육육': '6', '오오': '5',
       '네': '4', '세': '3', '두': '2', '한': '1', '빵': '0',
     };
-    
+
     // 기본 숫자 변환
     basicNumbers.forEach((korean, digit) {
       processedText = processedText.replaceAll(korean, digit);
     });
-    
+
     // 잘못 인식될 수 있는 단어들 처리 (더 정확하게)
     final corrections = {
       // 음성 인식 오류 보정
@@ -3208,485 +2861,27 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       '지': '2', '비': '3', '디': '2', '키': '7',
       '리': '2', '미': '3', '니': '2', '히': '7',
     };
-    
+
     corrections.forEach((wrong, correct) {
       // 단어 경계에서만 변환 (부분 문자열 오변환 방지)
-      processedText = processedText.replaceAll(RegExp(r'\b' + wrong + r'\b'), correct);
+      processedText =
+          processedText.replaceAll(RegExp(r'\b' + wrong + r'\b'), correct);
     });
-    
+
     print('최종 변환된 텍스트: $processedText');
     return processedText;
   }
-
-  // ==================== 메모 관련 함수들 ====================
-
-  // 메모 추가 다이얼로그 표시
-  void _showAddMemoDialog(Offset position) {
-    final TextEditingController memoController = TextEditingController();
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          alignment: Alignment.topCenter,
-          insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-          backgroundColor: const Color(0xFF252526),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(
-              color: Color(0xFF3C3C3C),
-              width: 1,
-            ),
-          ),
-          child: Container(
-              width: 320,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.note_add,
-                        color: Color(0xFFFFD700),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      '메모 추가',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: memoController,
-                  autofocus: true,
-                  maxLines: 4,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontFamilyFallback: ['Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'sans-serif'],
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '메모 내용을 입력하세요...',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 14,
-                      fontFamilyFallback: const ['Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'sans-serif'],
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF1E1E1E),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFFD700),
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.7),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      child: const Text('취소'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (memoController.text.trim().isNotEmpty) {
-                          _addMemo(position, memoController.text.trim());
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD700),
-                        foregroundColor: const Color(0xFF1E1E1E),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        '추가',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 메모 편집 다이얼로그 표시
-  void _showEditMemoDialog(int memoIndex) {
-    final memo = memos[memoIndex];
-    final TextEditingController memoController = TextEditingController(text: memo.text);
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          alignment: Alignment.topCenter,
-          insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-          backgroundColor: const Color(0xFF252526),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(
-              color: Color(0xFF3C3C3C),
-              width: 1,
-            ),
-          ),
-          child: Container(
-              width: 320,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.edit_note,
-                        color: Color(0xFFFFD700),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      '메모 편집',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showDeleteMemoConfirm(memoIndex);
-                      },
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Color(0xFFFF6B6B),
-                        size: 22,
-                      ),
-                      tooltip: '삭제',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: memoController,
-                  autofocus: true,
-                  maxLines: 4,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontFamilyFallback: ['Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'sans-serif'],
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '메모 내용을 입력하세요...',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 14,
-                      fontFamilyFallback: const ['Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'sans-serif'],
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF1E1E1E),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFFD700),
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.7),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      child: const Text('취소'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (memoController.text.trim().isNotEmpty) {
-                          _updateMemo(memoIndex, memoController.text.trim());
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD700),
-                        foregroundColor: const Color(0xFF1E1E1E),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        '저장',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 메모 삭제 확인 다이얼로그
-  void _showDeleteMemoConfirm(int memoIndex) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF252526),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(
-              color: Color(0xFF3C3C3C),
-              width: 1,
-            ),
-          ),
-          title: const Row(
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                color: Color(0xFFFF6B6B),
-                size: 24,
-              ),
-              SizedBox(width: 10),
-              Text(
-                '메모 삭제',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            '이 메모를 삭제하시겠습니까?',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                '취소',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteMemo(memoIndex);
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B6B),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('삭제'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // 메모 추가
-  void _addMemo(Offset position, String text) {
-    saveState();
-    setState(() {
-      memos.add(Memo(
-        position: position,
-        text: text,
-      ));
-    });
-    _updateFirebase();
-    print('메모 추가됨: $text at $position');
-  }
-
-  // 메모 업데이트
-  void _updateMemo(int index, String newText) {
-    if (index >= 0 && index < memos.length) {
-      saveState();
-      setState(() {
-        memos[index].text = newText;
-        memos[index].timestamp = DateTime.now().millisecondsSinceEpoch;
-      });
-      _updateFirebase();
-      print('메모 업데이트됨: $newText');
-    }
-  }
-
-  // 메모 삭제
-  void _deleteMemo(int index) {
-    if (index >= 0 && index < memos.length) {
-      saveState();
-      setState(() {
-        memos.removeAt(index);
-        if (selectedMemoIndex == index) {
-          selectedMemoIndex = null;
-        } else if (selectedMemoIndex != null && selectedMemoIndex! > index) {
-          selectedMemoIndex = selectedMemoIndex! - 1;
-        }
-      });
-      _updateFirebase();
-      print('메모 삭제됨');
-    }
-  }
-
-  // 화면 좌표를 모델 좌표로 변환 (메모용)
-  Offset _screenToModelForMemo(Offset screenPos) {
-    // viewOffset과 viewScale을 고려하여 변환
-    return Offset(
-      (screenPos.dx - viewOffset.dx) / viewScale,
-      (screenPos.dy - viewOffset.dy) / viewScale,
-    );
-  }
-
-  // 메모 탭 확인 (해당 위치에 메모가 있는지)
-  int? _getMemoAtPosition(Offset screenPos) {
-    final modelPos = _screenToModelForMemo(screenPos);
-    const hitRadius = 30.0; // 터치 반경
-
-    for (int i = memos.length - 1; i >= 0; i--) {
-      final memo = memos[i];
-      final distance = (modelPos - memo.position).distance;
-      if (distance < hitRadius / viewScale) {
-        return i;
-      }
-    }
-    return null;
-  }
-
-  // 길게 누르기 시작
-  void _startLongPress(Offset position) {
-    _longPressPosition = position;
-    _isLongPressing = true;
-    _longPressTimer?.cancel();
-    _longPressTimer = Timer(const Duration(milliseconds: 500), () {
-      if (_isLongPressing && _longPressPosition != null) {
-        // 길게 누르기 성공 - 메모 추가 다이얼로그 표시
-        final modelPos = _screenToModelForMemo(_longPressPosition!);
-        _showAddMemoDialog(modelPos);
-        _isLongPressing = false;
-      }
-    });
-  }
-
-  // 길게 누르기 취소
-  void _cancelLongPress() {
-    _longPressTimer?.cancel();
-    _isLongPressing = false;
-    _longPressPosition = null;
-  }
-
-  // ==================== 메모 관련 함수 끝 ====================
 
   @override
   void dispose() {
     _dropdownOverlay?.remove();
     _linesSubscription?.cancel();
     _circlesSubscription?.cancel();
-    _memosSubscription?.cancel();
     _currentPointSubscription?.cancel();
     _metadataSubscription?.cancel();
-    _longPressTimer?.cancel();
     _focusNode.dispose();
     inlineController.dispose();
     inlineFocus.dispose();
-    windowWidthController.dispose();
-    windowHeightController.dispose();
-    windowBottomHeightController.dispose();
-    windowTopHeightController.dispose();
     super.dispose();
   }
 
@@ -3694,7 +2889,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     linesHistory.add({
       'lines': lines.map((line) => line.copy()).toList(),
       'circles': circles.map((circle) => circle.copy()).toList(),
-      'memos': memos.map((memo) => memo.copy()).toList(),
       'currentPoint': currentPoint,
     });
 
@@ -3708,20 +2902,23 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
     final lastState = linesHistory.removeLast();
     setState(() {
-      lines = (lastState['lines'] as List<Line>).map((line) => line.copy()).toList();
-      circles = (lastState['circles'] as List<Circle>).map((circle) => circle.copy()).toList();
-      if (lastState['memos'] != null) {
-        memos = (lastState['memos'] as List<Memo>).map((memo) => memo.copy()).toList();
-      }
+      lines = (lastState['lines'] as List<Line>)
+          .map((line) => line.copy())
+          .toList();
+      circles = (lastState['circles'] as List<Circle>)
+          .map((circle) => circle.copy())
+          .toList();
       currentPoint = lastState['currentPoint'] as Offset;
-      selectedMemoIndex = null; // 되돌리기 후 메모 선택 해제
     });
     _updateFirebase();
   }
 
   void reset() {
-    if (lines.isEmpty && circles.isEmpty && viewScale == 0.3 && viewOffset == const Offset(500, 500)) return;
-    
+    if (lines.isEmpty &&
+        circles.isEmpty &&
+        viewScale == 0.3 &&
+        viewOffset == const Offset(500, 500)) return;
+
     // 확인 팝업 표시
     showDialog(
       context: context,
@@ -3804,7 +3001,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       viewRotation = 0.0;
     });
     _updateFirebase();
-    
+
     // 초기화 후 뷰 맞춤 자동 실행
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isMobile || isTablet) {
@@ -3822,20 +3019,23 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('onDirectionKey: 이미 처리 중 - 무시');
       return;
     }
-    
+
     print('onDirectionKey 호출됨: $direction');
-    print('현재 상태 - showInlineInput: $showInlineInput, inlineController.text: "${inlineController.text}"');
+    print(
+        '현재 상태 - showInlineInput: $showInlineInput, inlineController.text: "${inlineController.text}"');
     print('현재 상태 - lines.length: ${lines.length}, currentPoint: $currentPoint');
-    print('현재 상태 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex');
-    print('현재 상태 - arrowDirection: $arrowDirection, isDoubleDirectionPressed: $isDoubleDirectionPressed');
-    
+    print(
+        '현재 상태 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex');
+    print(
+        '현재 상태 - arrowDirection: $arrowDirection, isDoubleDirectionPressed: $isDoubleDirectionPressed');
+
     // 방향키 두 번 누름 감지
     bool wasDoublePressed = false;
     if (arrowDirection == direction && !isDoubleDirectionPressed) {
       wasDoublePressed = true;
       print('방향키 두 번 누름 감지: $direction');
     }
-    
+
     // 선택된 선이나 원이 있을 때의 처리
     if (selectedLineIndex >= 0 || selectedCircleIndex >= 0) {
       if (selectedCircleIndex >= 0) {
@@ -3846,10 +3046,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         // 선이 선택된 경우 선택 취소
       }
     }
-    
+
     // 자동 음성 모드 제거 - 화살표 버튼 누를 때마다 음성 인식 시작하지 않음
     // 성능 향상을 위해 사용자가 명시적으로 음성 버튼을 누를 때만 음성 인식 시작
-    
+
     setState(() {
       // 선택된 선/원이 있을 때의 처리
       if (selectedLineIndex >= 0 || selectedCircleIndex >= 0) {
@@ -3863,7 +3063,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           print('선 선택 취소 완료 - 그룹 선택 상태: ${selectedGroupLines.length}개');
         }
       }
-      
+
       // 방향키 두 번 누름 상태 업데이트
       if (wasDoublePressed) {
         isDoubleDirectionPressed = true;
@@ -3872,13 +3072,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isDoubleDirectionPressed = false;
         print('다른 방향키 누름 - 두 번 누름 상태 해제');
       }
-      
+
       arrowDirection = direction;
       inlineDirection = direction;
       lastDirection = direction; // 방향키 클릭 시 마지막 방향 설정
-      
+
       print('방향키 설정 후 - selectedGroupLines: $selectedGroupLines');
-      
+
       // 이미 인라인 입력이 표시 중이고 텍스트가 있다면 바로 실행
       if (showInlineInput && inlineController.text.isNotEmpty) {
         print('인라인 입력이 있음 - 즉시 실행');
@@ -3894,7 +3094,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isProcessingInput = false;
       }
     });
-    
+
     // 방향키 버튼 클릭 후 포커스 복원
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print('메인 포커스 복원');
@@ -3905,18 +3105,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   void drawLineWithDistance(String direction, double distance) {
     print('drawLineWithDistance 호출됨 - 방향: $direction, 거리: $distance');
     print('drawLineWithDistance - isProcessingInput: $isProcessingInput');
-    
+
     // 이미 confirmInlineInput에서 isProcessingInput이 true로 설정되었으므로
     // 여기서는 추가로 설정하지 않음
     if (!isProcessingInput) {
       print('처리 중 상태가 아님 - 예상치 못한 호출');
       isProcessingInput = true;
     }
-    
+
     // 화면 회전을 고려한 방향 변환
     String transformedDirection = _transformDirectionForRotation(direction);
     print('화면 회전 고려 - 원래 방향: $direction, 변환된 방향: $transformedDirection');
-    
+
     Offset newPoint;
     switch (transformedDirection) {
       case 'Up':
@@ -3939,225 +3139,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
     print('새로운 점 계산됨: $newPoint (시작점: $currentPoint)');
 
-    // 현재점이 기존 선의 중간에 있는지 확인하고 분할
-    // (끝점이 아닌 선 위의 점에서 그릴 때)
-    int? lineToSplitIndex;
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i];
-
-      // 끝점인지 확인 (끝점이면 분할 불필요)
-      final isStartEndpoint = (line.start.dx - currentPoint.dx).abs() < 0.1 &&
-                              (line.start.dy - currentPoint.dy).abs() < 0.1;
-      final isEndEndpoint = (line.end.dx - currentPoint.dx).abs() < 0.1 &&
-                            (line.end.dy - currentPoint.dy).abs() < 0.1;
-
-      if (isStartEndpoint || isEndEndpoint) continue;
-
-      // 현재점이 선 위에 있는지 확인
-      final lineVec = line.end - line.start;
-      final lineLen = lineVec.distance;
-      if (lineLen < 0.1) continue;
-
-      final pointVec = currentPoint - line.start;
-      final projection = (pointVec.dx * lineVec.dx + pointVec.dy * lineVec.dy) / (lineLen * lineLen);
-
-      // 투영점이 선분 내부에 있는지 (0 < projection < 1)
-      if (projection > 0.01 && projection < 0.99) {
-        // 선까지의 수직 거리 계산
-        final projectedPoint = Offset(
-          line.start.dx + projection * lineVec.dx,
-          line.start.dy + projection * lineVec.dy,
-        );
-        final distToLine = (currentPoint - projectedPoint).distance;
-
-        // 선 위에 있으면 (거리가 매우 작으면)
-        if (distToLine < 1.0) {
-          lineToSplitIndex = i;
-          break;
-        }
-      }
-    }
-
-    // 현재점이 선 중간에 있으면 해당 선을 먼저 분할
-    if (lineToSplitIndex != null) {
-      final splitIdx = lineToSplitIndex!;
-      final lineToSplit = lines[splitIdx];
-      print('선 중간점에서 그리기 - 기존 선 분할: $splitIdx');
-
-      // 기존 선을 두 개로 분할 (start→currentPoint, currentPoint→end)
-      lines[splitIdx] = Line(
-        start: lineToSplit.start,
-        end: currentPoint,
-        openingType: lineToSplit.openingType,
-        windowWidth: lineToSplit.windowWidth,
-        windowHeight: lineToSplit.windowHeight,
-        windowBottomHeight: lineToSplit.windowBottomHeight,
-        windowTopHeight: lineToSplit.windowTopHeight,
-      );
-      lines.add(Line(
-        start: currentPoint,
-        end: lineToSplit.end,
-        openingType: lineToSplit.openingType,
-        windowWidth: lineToSplit.windowWidth,
-        windowHeight: lineToSplit.windowHeight,
-        windowBottomHeight: lineToSplit.windowBottomHeight,
-        windowTopHeight: lineToSplit.windowTopHeight,
-      ));
-    }
-
-    // 겹치는 선 분할 체크 (같은 방향/반대 방향 모두)
-    // currentPoint에서 시작하거나 끝나는 선 중 겹치는 선 찾기
-    int? overlappingLineIndex;
-    bool isStartPoint = false; // true: 기존 선의 start가 currentPoint, false: end가 currentPoint
-    bool isSameDirection = false; // true: 같은 방향으로 겹침, false: 반대 방향으로 겹침
-
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      final dx = line.end.dx - line.start.dx;
-      final dy = line.end.dy - line.start.dy;
-
-      // currentPoint가 선의 시작점인 경우
-      if ((line.start.dx - currentPoint.dx).abs() < 0.1 &&
-          (line.start.dy - currentPoint.dy).abs() < 0.1) {
-        // 선의 방향 확인 (start → end)
-        String lineDirection = '';
-        if (dx.abs() > dy.abs()) {
-          lineDirection = dx > 0 ? 'Right' : 'Left';
-        } else if (dy.abs() > dx.abs()) {
-          lineDirection = dy > 0 ? 'Up' : 'Down';
-        }
-
-        // 같은 방향인지 확인 (같은 방향으로 그리면 중복)
-        if (transformedDirection == lineDirection) {
-          overlappingLineIndex = i;
-          isStartPoint = true;
-          isSameDirection = true;
-          break;
-        }
-
-        // 반대 방향인지 확인
-        bool isOpposite = (transformedDirection == 'Right' && lineDirection == 'Left') ||
-                          (transformedDirection == 'Left' && lineDirection == 'Right') ||
-                          (transformedDirection == 'Up' && lineDirection == 'Down') ||
-                          (transformedDirection == 'Down' && lineDirection == 'Up');
-
-        if (isOpposite) {
-          overlappingLineIndex = i;
-          isStartPoint = true;
-          isSameDirection = false;
-          break;
-        }
-      }
-
-      // currentPoint가 선의 끝점인 경우
-      if ((line.end.dx - currentPoint.dx).abs() < 0.1 &&
-          (line.end.dy - currentPoint.dy).abs() < 0.1) {
-        // 선의 방향 확인 (start → end)
-        String lineDirection = '';
-        if (dx.abs() > dy.abs()) {
-          lineDirection = dx > 0 ? 'Right' : 'Left';
-        } else if (dy.abs() > dx.abs()) {
-          lineDirection = dy > 0 ? 'Up' : 'Down';
-        }
-
-        // end에서 start 방향 (반대)
-        String lineDirectionFromEnd = '';
-        if (dx.abs() > dy.abs()) {
-          lineDirectionFromEnd = dx > 0 ? 'Left' : 'Right';
-        } else if (dy.abs() > dx.abs()) {
-          lineDirectionFromEnd = dy > 0 ? 'Down' : 'Up';
-        }
-
-        // end에서 start 방향으로 그리면 겹침 (반대 방향)
-        if (transformedDirection == lineDirectionFromEnd) {
-          overlappingLineIndex = i;
-          isStartPoint = false;
-          isSameDirection = false;
-          break;
-        }
-      }
-    }
-
     saveState();
 
-    // 겹치는 선이 있으면 분할
-    if (overlappingLineIndex != null) {
-      final lineIdx = overlappingLineIndex!; // non-nullable로 변환
-      final existingLine = lines[lineIdx];
-      final existingLength = (existingLine.end - existingLine.start).distance;
-
-      if (distance < existingLength) {
-        // 기존 선보다 짧으면 두 개의 선으로 분할
-        print('선 분할: 기존 선 길이 $existingLength → ${existingLength - distance} + $distance');
-
-        setState(() {
-          if (isStartPoint) {
-            // 기존 선의 start가 currentPoint인 경우
-            // 기존 선: currentPoint → existingLine.end (길이: existingLength)
-            // 분할 후:
-            //   1. currentPoint → newPoint (길이: distance) - 새 선
-            //   2. newPoint → existingLine.end (길이: existingLength - distance) - 기존 선 수정
-
-            // 기존 선 수정 (newPoint → existingLine.end)
-            lines[lineIdx] = Line(
-              start: newPoint,
-              end: existingLine.end,
-              openingType: existingLine.openingType,
-              windowWidth: existingLine.windowWidth,
-              windowHeight: existingLine.windowHeight,
-              windowBottomHeight: existingLine.windowBottomHeight,
-              windowTopHeight: existingLine.windowTopHeight,
-            );
-
-            // 새 선 추가 (currentPoint → newPoint)
-            lines.add(Line(
-              start: currentPoint,
-              end: newPoint,
-              openingType: pendingOpeningType,
-            ));
-          } else {
-            // 기존 선의 end가 currentPoint인 경우
-            // 기존 선: existingLine.start → currentPoint (길이: existingLength)
-            // 분할 후:
-            //   1. existingLine.start → newPoint (길이: existingLength - distance) - 기존 선 수정
-            //   2. newPoint → currentPoint (길이: distance) - 새 선
-
-            // 기존 선 수정 (existingLine.start → newPoint)
-            lines[lineIdx] = Line(
-              start: existingLine.start,
-              end: newPoint,
-              openingType: existingLine.openingType,
-              windowWidth: existingLine.windowWidth,
-              windowHeight: existingLine.windowHeight,
-              windowBottomHeight: existingLine.windowBottomHeight,
-              windowTopHeight: existingLine.windowTopHeight,
-            );
-
-            // 새 선 추가 (newPoint → currentPoint)
-            lines.add(Line(
-              start: newPoint,
-              end: currentPoint,
-              openingType: pendingOpeningType,
-            ));
-          }
-
-          currentPoint = newPoint;
-          pendingOpeningType = null;
-          lastDirection = direction;
-          isProcessingInput = false;
-
-          selectedEndpoint = null;
-          selectedEndpointLineIndex = null;
-          selectedEndpointType = null;
-        });
-
-        print('선 분할 완료 - 총 선 개수: ${lines.length}');
-        _updateFirebase();
-        return;
-      }
-    }
-
-    // 겹치는 선이 없거나 새 선이 더 긴 경우 일반 선 추가
     setState(() {
       lines.add(Line(
         start: currentPoint,
@@ -4178,23 +3161,49 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     print('선 추가됨 - 총 선 개수: ${lines.length}');
 
     _updateFirebase();
+
+    // 모바일/태블릿에서는 새 선이 화면에 보이도록 뷰 조정
+    if (isMobile || isTablet) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            // currentPoint가 화면에 보이는지 확인하고 필요시 조정
+            final currentScreen = _modelToScreen(currentPoint);
+            final screenSize = MediaQuery.of(context).size;
+
+            // 화면 경계에서 50px 여백
+            const margin = 50.0;
+            final needsAdjustment = currentScreen.dx < margin ||
+                currentScreen.dx > screenSize.width - margin ||
+                currentScreen.dy < margin ||
+                currentScreen.dy > screenSize.height - 200 - margin;
+
+            if (needsAdjustment) {
+              print('모바일/태블릿: currentPoint가 화면 밖 - 뷰 조정');
+              centerCurrentPoint();
+            }
+          }
+        });
+      });
+    }
   }
 
   void moveCurrentPointWithDistance(String direction, double distance) {
     print('moveCurrentPointWithDistance 호출됨 - 방향: $direction, 거리: $distance');
-    print('moveCurrentPointWithDistance - isProcessingInput: $isProcessingInput');
-    
+    print(
+        'moveCurrentPointWithDistance - isProcessingInput: $isProcessingInput');
+
     // 이미 confirmInlineInput에서 isProcessingInput이 true로 설정되었으므로
     // 여기서는 추가로 설정하지 않음
     if (!isProcessingInput) {
       print('처리 중 상태가 아님 - 예상치 못한 호출');
       isProcessingInput = true;
     }
-    
+
     // 화면 회전을 고려한 방향 변환
     String transformedDirection = _transformDirectionForRotation(direction);
     print('화면 회전 고려 - 원래 방향: $direction, 변환된 방향: $transformedDirection');
-    
+
     Offset newPoint;
     switch (transformedDirection) {
       case 'Up':
@@ -4216,42 +3225,67 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     }
 
     print('점 이동: $currentPoint -> $newPoint');
-    
+
     saveState();
-    
+
     setState(() {
       // 방향키 두 번 누른 상태에서는 선을 수정하지 않고 currentPoint만 이동
       currentPoint = newPoint;
-      
+
       // 선택된 끝점 해제 (새로운 위치로 이동했으므로)
       selectedEndpoint = null;
       selectedEndpointLineIndex = null;
       selectedEndpointType = null;
-      
+
       lastDirection = direction; // 마지막 방향 저장
       isProcessingInput = false;
       isDoubleDirectionPressed = false; // 점 이동 후 두 번 누름 상태 해제
     });
-    
+
     print('점 이동 완료 - 새 위치: $currentPoint');
 
     _updateFirebase();
+
+    // 모바일/태블릿에서는 새 점이 화면에 보이도록 뷰 조정
+    if (isMobile || isTablet) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            // currentPoint가 화면에 보이는지 확인하고 필요시 조정
+            final currentScreen = _modelToScreen(currentPoint);
+            final screenSize = MediaQuery.of(context).size;
+
+            // 화면 경계에서 50px 여백
+            const margin = 50.0;
+            final needsAdjustment = currentScreen.dx < margin ||
+                currentScreen.dx > screenSize.width - margin ||
+                currentScreen.dy < margin ||
+                currentScreen.dy > screenSize.height - 200 - margin;
+
+            if (needsAdjustment) {
+              print('모바일/태블릿: currentPoint가 화면 밖 - 뷰 조정');
+              centerCurrentPoint();
+            }
+          }
+        });
+      });
+    }
   }
 
   void confirmInlineInput() {
     print('confirmInlineInput 호출됨 - isProcessingInput: $isProcessingInput');
-    
+
     if (isProcessingInput) {
       print('이미 처리 중 - 중복 호출 방지로 종료');
       return;
     }
-    
+
     // 즉시 처리 중 상태로 설정하여 중복 호출 방지
     isProcessingInput = true;
-    
+
     String inputText = inlineController.text.trim();
     print('입력된 텍스트: "$inputText"');
-    
+
     if (inputText.isEmpty) {
       print('입력 텍스트가 비어있음');
       setState(() {
@@ -4264,7 +3298,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
+
     // 간단한 수식 계산 처리
     double? distance;
     if (inputText.contains('+')) {
@@ -4286,9 +3320,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     } else {
       distance = double.tryParse(inputText);
     }
-    
+
     print('계산된 거리: $distance');
-    
+
     if (distance == null || distance < 0) {
       print('잘못된 거리값: $inputText');
       setState(() {
@@ -4301,15 +3335,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
       return;
     }
-    
-    print('현재 상태 - selectedLineIndex: $selectedLineIndex, arrowDirection: $arrowDirection');
+
+    print(
+        '현재 상태 - selectedLineIndex: $selectedLineIndex, arrowDirection: $arrowDirection');
     print('inlineDirection: "$inlineDirection"');
     print('원 모드 상태 - circleMode: $circleMode, circleCenter: $circleCenter');
-    
+
     // 원 모드에서 지름 입력
     if (circleMode && circleCenter != null) {
       print('✅ 원 생성 모드 진입: 중심점 $circleCenter, 지름 $distance');
-      
+
       // 원 생성 전 유효성 검사
       if (distance <= 0) {
         print('원 생성 오류: 지름이 0 이하입니다 ($distance)');
@@ -4326,9 +3361,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         });
         return;
       }
-      
+
       final radius = distance / 2; // 지름을 반지름으로 변환
-      
+
       // 반지름 유효성 검사
       if (radius <= 0 || radius.isNaN || radius.isInfinite) {
         print('원 생성 오류: 반지름이 유효하지 않습니다 ($radius)');
@@ -4345,19 +3380,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         });
         return;
       }
-      
+
       saveState();
-      
+
       try {
         circles.add(Circle(
           center: circleCenter!,
           radius: radius,
         ));
         print('원 생성 성공: 중심점 $circleCenter, 반지름 $radius');
-        
+
         // 생성된 원을 선택 상태로 설정
         final newCircleIndex = circles.length - 1;
-        
+
         setState(() {
           showInlineInput = false;
           isProcessingInput = false;
@@ -4369,10 +3404,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           selectedCircleIndex = newCircleIndex;
           selectedLineIndex = -1; // 선 선택 해제
         });
-        
+
         print('원 생성 완료 - circleMode 해제');
         _updateFirebase();
-        
       } catch (e) {
         print('원 생성 중 오류 발생: $e');
         setState(() {
@@ -4385,26 +3419,28 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         });
         print('원 생성 실패 - circleMode 해제');
       }
-      
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _focusNode.requestFocus();
       });
       return;
     }
-    
+
     // 파란선 그룹 이동 처리 (selectedGroupLines가 있을 때)
     if (selectedGroupLines.isNotEmpty && arrowDirection != null) {
-      print('파란선 그룹 이동 모드 - 선택된 선: ${selectedGroupLines.length}개, 방향: $arrowDirection, 거리: $distance');
+      print(
+          '파란선 그룹 이동 모드 - 선택된 선: ${selectedGroupLines.length}개, 방향: $arrowDirection, 거리: $distance');
       saveState();
-      
+
       // 화면 회전을 고려한 방향 변환
-      String transformedDirection = _transformDirectionForRotation(arrowDirection!);
-      
+      String transformedDirection =
+          _transformDirectionForRotation(arrowDirection!);
+
       // 이동 오프셋 계산
       Offset moveOffset;
       switch (transformedDirection) {
         case 'Up':
-          moveOffset = Offset(0, distance);  // 위로 이동 = Y 증가
+          moveOffset = Offset(0, distance); // 위로 이동 = Y 증가
           break;
         case 'Down':
           moveOffset = Offset(0, -distance); // 아래로 이동 = Y 감소
@@ -4427,7 +3463,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           });
           return;
       }
-      
+
       setState(() {
         // 선택된 모든 선들을 이동
         for (int lineIndex in selectedGroupLines) {
@@ -4436,31 +3472,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             lines[lineIndex].end = lines[lineIndex].end + moveOffset;
           }
         }
-        
+
         showInlineInput = false;
         isProcessingInput = false;
         arrowDirection = null;
         inlineDirection = "";
         inlineController.clear();
       });
-      
+
       _updateFirebase();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _focusNode.requestFocus();
       });
       return;
     }
-    
+
     // 원 이동 모드 (선택된 원이 있고 방향키가 설정된 경우)
     if (selectedCircleIndex >= 0 && arrowDirection != null) {
-      print('원 이동 모드: 원 인덱스 $selectedCircleIndex, 방향 $arrowDirection, 거리 $distance');
-      
+      print(
+          '원 이동 모드: 원 인덱스 $selectedCircleIndex, 방향 $arrowDirection, 거리 $distance');
+
       if (selectedCircleIndex >= 0 && selectedCircleIndex < circles.length) {
         saveState();
-        
+
         final circle = circles[selectedCircleIndex];
         Offset newCenter;
-        
+
         switch (arrowDirection) {
           case 'Up':
             newCenter = Offset(circle.center.dx, circle.center.dy + distance);
@@ -4487,7 +3524,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             });
             return;
         }
-        
+
         setState(() {
           circles[selectedCircleIndex] = Circle(
             center: newCenter,
@@ -4500,10 +3537,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           isDoubleDirectionPressed = false;
           // 원 선택 상태 유지
         });
-        
+
         print('원 이동 완료: 새 중심점 $newCenter');
         _updateFirebase();
-        
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _focusNode.requestFocus();
         });
@@ -4522,37 +3559,39 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isDoubleDirectionPressed = false;
         selectedLineIndex = -1; // 수정 후 선택 해제
       });
-      
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _focusNode.requestFocus();
       });
       return;
     }
-    
+
     // 방향키 두 번 누름 상태에서는 점 이동, 그렇지 않으면 선 그리기
-    String direction = inlineDirection.isNotEmpty ? inlineDirection : (arrowDirection ?? 'Right');
-    
+    String direction = inlineDirection.isNotEmpty
+        ? inlineDirection
+        : (arrowDirection ?? 'Right');
+
     if (isDoubleDirectionPressed) {
       print('점 이동 시작 - 방향: $direction, 거리: $distance');
       print('현재 점: $currentPoint');
-      
+
       // 점 이동 함수 호출
       moveCurrentPointWithDistance(direction, distance);
     } else {
       print('선 그리기 시작 - 방향: $direction, 거리: $distance');
       print('현재 점: $currentPoint');
-      
+
       // 선 그리기 함수 호출
       drawLineWithDistance(direction, distance);
     }
-    
+
     setState(() {
       showInlineInput = false;
       arrowDirection = null;
       inlineDirection = "";
       // 두 번 누름 상태는 moveCurrentPointWithDistance 함수 내부에서 초기화됨
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
@@ -4567,131 +3606,22 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       isDoubleDirectionPressed = false;
       inlineController.clear();
     });
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
   }
 
-  // 창문 속성 업데이트 함수
-  void _updateWindowProperty(String field, String value) {
-    if (selectedWindowLineIndex == null) return;
-
-    final doubleValue = double.tryParse(value);
-    if (doubleValue != null || value.isEmpty) {
-      setState(() {
-        switch (field) {
-          case 'width':
-            lines[selectedWindowLineIndex!].windowWidth = doubleValue;
-            break;
-          case 'height':
-            lines[selectedWindowLineIndex!].windowHeight = doubleValue;
-            break;
-          case 'bottomHeight':
-            lines[selectedWindowLineIndex!].windowBottomHeight = doubleValue;
-            break;
-          case 'topHeight':
-            lines[selectedWindowLineIndex!].windowTopHeight = doubleValue;
-            break;
-        }
-      });
-      _updateFirebase();
-    }
-  }
-
   void onNumberPadKey(String key) {
-    // 창문 속성 입력이 활성화된 경우 처리
-    if (activeWindowField != null) {
-      if (key == 'Del') {
-        // 백스페이스 처리
-        setState(() {
-          TextEditingController controller;
-          switch (activeWindowField) {
-            case 'width':
-              controller = windowWidthController;
-              break;
-            case 'height':
-              controller = windowHeightController;
-              break;
-            case 'bottomHeight':
-              controller = windowBottomHeightController;
-              break;
-            case 'topHeight':
-              controller = windowTopHeightController;
-              break;
-            default:
-              return;
-          }
-
-          final currentText = controller.text;
-          if (currentText.isNotEmpty) {
-            controller.text = currentText.substring(0, currentText.length - 1);
-            controller.selection = TextSelection.fromPosition(
-              TextPosition(offset: controller.text.length),
-            );
-
-            // 값 업데이트
-            _updateWindowProperty(activeWindowField!, controller.text);
-          }
-        });
-      } else if (key == 'Ent') {
-        // Enter 키 처리 - 다음 필드로 이동 또는 완료
-        setState(() {
-          if (activeWindowField == 'width') {
-            activeWindowField = 'height';
-          } else if (activeWindowField == 'height') {
-            activeWindowField = 'bottomHeight';
-          } else if (activeWindowField == 'bottomHeight') {
-            activeWindowField = 'topHeight';
-          } else {
-            activeWindowField = null; // 입력 완료
-          }
-        });
-      } else if (RegExp(r'[0-9]').hasMatch(key)) {
-        // 숫자 입력 처리
-        setState(() {
-          TextEditingController controller;
-          switch (activeWindowField) {
-            case 'width':
-              controller = windowWidthController;
-              break;
-            case 'height':
-              controller = windowHeightController;
-              break;
-            case 'bottomHeight':
-              controller = windowBottomHeightController;
-              break;
-            case 'topHeight':
-              controller = windowTopHeightController;
-              break;
-            default:
-              return;
-          }
-
-          controller.text = controller.text + key;
-          controller.selection = TextSelection.fromPosition(
-            TextPosition(offset: controller.text.length),
-          );
-
-          // 값 업데이트
-          _updateWindowProperty(activeWindowField!, controller.text);
-        });
-      }
-      return; // 창문 속성 입력 처리 완료
-    }
-
-    // 기존 코드
     if (!showInlineInput && key != 'Del' && key != 'Ent') {
-
-      // 인라인 입력 모드로 전환 (입력창은 숫자 입력 시 표시)
+      // 인라인 입력 모드로 전환
       setState(() {
-        showInlineInput = false; // 입력창은 숨김
+        showInlineInput = true;
         inlineController.text = '';
 
         // 원 모드에서 중심점이 설정되어 있으면 지름 입력 모드
         if (circleMode && circleCenter != null) {
           print('원 모드 - 지름 입력 모드로 전환');
-          showInlineInput = true; // 원 모드에서는 바로 표시
           arrowDirection = null;
           inlineDirection = "";
         } else if (selectedCircleIndex >= 0) {
@@ -4700,10 +3630,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           print('원 선택됨 - 원 이동 모드: 방향키 유지');
         } else if (selectedLineIndex >= 0) {
           // 선택된 선이 있으면 길이 수정 모드
-          print('선 선택됨 - 길이 수정 모드로 전환');
-          showInlineInput = true; // 입력창 표시
-          arrowDirection = null;
-          inlineDirection = "";
+          // 방향키 설정은 그대로 유지
         } else if (arrowDirection != null || inlineDirection.isNotEmpty) {
           // 방향키가 설정되어 있으면 해당 방향으로 새 선 그리기 모드
           print('방향키 설정됨 - 새 선 그리기 모드: $arrowDirection / $inlineDirection');
@@ -4719,32 +3646,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       });
     }
-    
+
     if (key == 'Del') {
       if (showInlineInput && inlineController.text.isNotEmpty) {
         // 숫자 입력 중이면 백스페이스 기능 (마지막 문자 삭제)
         setState(() {
           final currentText = inlineController.text;
           if (currentText.isNotEmpty) {
-            inlineController.text = currentText.substring(0, currentText.length - 1);
+            inlineController.text =
+                currentText.substring(0, currentText.length - 1);
             inlineController.selection = TextSelection.fromPosition(
               TextPosition(offset: inlineController.text.length),
             );
-
-            // 모든 숫자를 지우면 입력창도 숨김
-            if (inlineController.text.isEmpty) {
-              showInlineInput = false;
-            }
           }
         });
       } else {
-        // 숫자 입력 중이 아니면 선/원/거리측정/메모 삭제
-        print('Del 키 처리 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex, selectedMeasurementIndex: $selectedMeasurementIndex, selectedMemoIndex: $selectedMemoIndex');
-        if (selectedMemoIndex != null) {
-          // 선택된 메모가 있으면 삭제 확인 팝업 표시
-          print('Del 버튼: 선택된 메모 삭제 확인 (인덱스: $selectedMemoIndex)');
-          _showDeleteMemoConfirm(selectedMemoIndex!);
-        } else if (selectedMeasurementIndex != null) {
+        // 숫자 입력 중이 아니면 선/원/거리측정 삭제
+        print(
+            'Del 키 처리 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex, selectedMeasurementIndex: $selectedMeasurementIndex');
+        if (selectedMeasurementIndex != null) {
           // 선택된 거리측정이 있으면 삭제
           print('Del 버튼: 선택된 거리측정 삭제 (인덱스: $selectedMeasurementIndex)');
           setState(() {
@@ -4761,9 +3681,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           deleteSelectedLine();
         } else {
           // 선택된 것이 없으면 가장 최근에 추가된 것 삭제
-          int? lastLineTimestamp = lines.isNotEmpty ? lines.last.timestamp : null;
-          int? lastCircleTimestamp = circles.isNotEmpty ? circles.last.timestamp : null;
-          int? lastMeasurementTimestamp = distanceMeasurements.isNotEmpty ? distanceMeasurements.last.timestamp : null;
+          int? lastLineTimestamp =
+              lines.isNotEmpty ? lines.last.timestamp : null;
+          int? lastCircleTimestamp =
+              circles.isNotEmpty ? circles.last.timestamp : null;
+          int? lastMeasurementTimestamp = distanceMeasurements.isNotEmpty
+              ? distanceMeasurements.last.timestamp
+              : null;
 
           int maxTimestamp = -1;
           String? deleteType;
@@ -4772,11 +3696,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             maxTimestamp = lastLineTimestamp;
             deleteType = 'line';
           }
-          if (lastCircleTimestamp != null && lastCircleTimestamp > maxTimestamp) {
+          if (lastCircleTimestamp != null &&
+              lastCircleTimestamp > maxTimestamp) {
             maxTimestamp = lastCircleTimestamp;
             deleteType = 'circle';
           }
-          if (lastMeasurementTimestamp != null && lastMeasurementTimestamp > maxTimestamp) {
+          if (lastMeasurementTimestamp != null &&
+              lastMeasurementTimestamp > maxTimestamp) {
             maxTimestamp = lastMeasurementTimestamp;
             deleteType = 'measurement';
           }
@@ -4796,7 +3722,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       }
     } else if (key == 'Ent') {
-      print('Enter 키 눌림 - showInlineInput: $showInlineInput, circleMode: $circleMode, circleCenter: $circleCenter');
+      print(
+          'Enter 키 눌림 - showInlineInput: $showInlineInput, circleMode: $circleMode, circleCenter: $circleCenter');
       if (showInlineInput) {
         print('인라인 입력 확인 호출');
         confirmInlineInput();
@@ -4806,7 +3733,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         setState(() {
           showInlineInput = true;
           inlineController.text = '';
-          
+
           // 원 모드에서 중심점이 설정되어 있으면 지름 입력 모드
           if (circleMode && circleCenter != null) {
             print('원 모드 - Enter로 지름 입력 모드 전환');
@@ -4815,11 +3742,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           } else if (selectedCircleIndex >= 0) {
             // 선택된 원이 있으면 원 이동 모드 - 방향키 유지
             print('원 선택됨 - Enter로 원 이동 모드 전환');
-          } else if (selectedLineIndex >= 0) {
-            // 선택된 선이 있으면 길이 수정 모드 - 방향 설정 안 함
-            print('선 선택됨 - Enter로 길이 수정 모드 전환');
-            arrowDirection = null;
-            inlineDirection = "";
           } else if (inlineDirection.isEmpty && arrowDirection == null) {
             inlineDirection = 'Right';
             arrowDirection = 'Right';
@@ -4829,13 +3751,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           inlineFocus.requestFocus();
         });
       }
-    } else if (key == '+' || key == '-' || key == '00' || RegExp(r'^[0-9]$').hasMatch(key)) {
-      // 방향키가 설정되어 있으면 입력창 표시하고 숫자 추가
-      if (arrowDirection != null || showInlineInput) {
+    } else if (key == '+' ||
+        key == '-' ||
+        key == '00' ||
+        RegExp(r'^[0-9]$').hasMatch(key)) {
+      if (showInlineInput) {
         setState(() {
-          if (!showInlineInput) {
-            showInlineInput = true; // 첫 숫자 입력 시 입력창 표시
-          }
           inlineController.text += key;
         });
         inlineController.selection = TextSelection.fromPosition(
@@ -4843,7 +3764,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         );
       }
     }
-    
+
     // 포커스 유지
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (showInlineInput) {
@@ -4856,151 +3777,49 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void modifyLineLength(int index, double newLength) {
     if (index < 0 || index >= lines.length) return;
-    
+
     final line = lines[index];
     final dx = line.end.dx - line.start.dx;
     final dy = line.end.dy - line.start.dy;
     final oldLen = math.sqrt(dx * dx + dy * dy);
-    
+
     if (oldLen == 0) return;
-    
+
     // 길이가 0이 되는 경우 특별 처리
     if (newLength == 0) {
       print('선 길이를 0으로 변경 - 연결된 모든 선들 이동');
-      
+
       // 일반적인 길이 수정처럼 끝점을 시작점으로 이동시키되 선은 삭제
       final oldEnd = line.end;
       final newEnd = line.start; // 길이가 0이므로 끝점을 시작점으로
-      
+
       setState(() {
         // 대각선이든 아니든 연결된 모든 요소들을 이동시킴
         // 연결된 모든 요소들을 이동시키는 함수
-        void moveConnectedElements(Offset oldPoint, Offset newPoint, Set<int> visitedLines) {
-            final pointShift = Offset(
-              newPoint.dx - oldPoint.dx,
-              newPoint.dy - oldPoint.dy,
-            );
-            
-            for (int i = 0; i < lines.length; i++) {
-              if (visitedLines.contains(i) || i == index) continue; // 현재 선은 제외
-              
-              final currentLine = lines[i];
-              
-              if (currentLine.isDiagonal) {
-                if (currentLine.connectedPoints != null) {
-                  final startInfo = currentLine.connectedPoints!['start'] as List<int>;
-                  final endInfo = currentLine.connectedPoints!['end'] as List<int>;
-                  
-                  if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
-                      (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
-                    currentLine.start = newPoint;
-                  }
-                  
-                  if ((currentLine.end.dx - oldPoint.dx).abs() < 0.01 &&
-                      (currentLine.end.dy - oldPoint.dy).abs() < 0.01) {
-                    currentLine.end = newPoint;
-                  }
-                }
-              } else {
-                if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
-                    (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
-                  visitedLines.add(i);
-                  
-                  currentLine.start = newPoint;
-                  final newEndPoint = Offset(
-                    currentLine.end.dx + pointShift.dx,
-                    currentLine.end.dy + pointShift.dy,
-                  );
-                  final oldEndPoint = currentLine.end;
-                  currentLine.end = newEndPoint;
-                  
-                  moveConnectedElements(oldEndPoint, newEndPoint, visitedLines);
-                }
-              }
-            }
-            
-            if ((currentPoint.dx - oldPoint.dx).abs() < 0.01 &&
-                (currentPoint.dy - oldPoint.dy).abs() < 0.01) {
-              currentPoint = newPoint;
-            }
-          }
-        
-        final visitedLines = <int>{index};
-        moveConnectedElements(oldEnd, newEnd, visitedLines);
-        
-        // 길이가 0인 선 삭제
-        lines.removeAt(index);
-        
-        // 선택 상태 초기화
-        selectedLineIndex = -1;
-        
-        // 대각선 연결 정보 업데이트
-        for (final line in lines) {
-          if (line.isDiagonal && line.connectedPoints != null) {
-            final startInfo = line.connectedPoints!['start'] as List<int>;
-            final endInfo = line.connectedPoints!['end'] as List<int>;
-            
-            // 삭제된 선을 참조하는 경우 -1로 설정
-            if (startInfo[0] == index) {
-              startInfo[0] = -1;
-            } else if (startInfo[0] > index) {
-              startInfo[0]--;
-            }
-            
-            if (endInfo[0] == index) {
-              endInfo[0] = -1;
-            } else if (endInfo[0] > index) {
-              endInfo[0]--;
-            }
-          }
-        }
-      });
-      
-      _updateFirebase();
-      return;
-    }
-    
-    final unitX = dx / oldLen;
-    final unitY = dy / oldLen;
-    
-    final newEnd = Offset(
-      line.start.dx + newLength * unitX,
-      line.start.dy + newLength * unitY,
-    );
-    
-    setState(() {
-      if (line.isDiagonal) {
-        line.end = newEnd;
-      } else {
-        final oldEnd = line.end;
-        final shift = Offset(
-          newEnd.dx - line.end.dx,
-          newEnd.dy - line.end.dy,
-        );
-        
-        line.end = newEnd;
-        
-        void moveConnectedElements(Offset oldPoint, Offset newPoint, Set<int> visitedLines) {
+        void moveConnectedElements(
+            Offset oldPoint, Offset newPoint, Set<int> visitedLines) {
           final pointShift = Offset(
             newPoint.dx - oldPoint.dx,
             newPoint.dy - oldPoint.dy,
           );
-          
+
           for (int i = 0; i < lines.length; i++) {
-            if (visitedLines.contains(i)) continue;
-            
+            if (visitedLines.contains(i) || i == index) continue; // 현재 선은 제외
+
             final currentLine = lines[i];
-            
+
             if (currentLine.isDiagonal) {
               if (currentLine.connectedPoints != null) {
-                final startInfo = currentLine.connectedPoints!['start'] as List<int>;
-                final endInfo = currentLine.connectedPoints!['end'] as List<int>;
-                
+                final startInfo =
+                    currentLine.connectedPoints!['start'] as List<int>;
+                final endInfo =
+                    currentLine.connectedPoints!['end'] as List<int>;
+
                 if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
                     (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
                   currentLine.start = newPoint;
                 }
-                
+
                 if ((currentLine.end.dx - oldPoint.dx).abs() < 0.01 &&
                     (currentLine.end.dy - oldPoint.dy).abs() < 0.01) {
                   currentLine.end = newPoint;
@@ -5010,7 +3829,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
                   (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
                 visitedLines.add(i);
-                
+
                 currentLine.start = newPoint;
                 final newEndPoint = Offset(
                   currentLine.end.dx + pointShift.dx,
@@ -5018,23 +3837,131 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                 );
                 final oldEndPoint = currentLine.end;
                 currentLine.end = newEndPoint;
-                
+
                 moveConnectedElements(oldEndPoint, newEndPoint, visitedLines);
               }
             }
           }
-          
+
           if ((currentPoint.dx - oldPoint.dx).abs() < 0.01 &&
               (currentPoint.dy - oldPoint.dy).abs() < 0.01) {
             currentPoint = newPoint;
           }
         }
-        
+
+        final visitedLines = <int>{index};
+        moveConnectedElements(oldEnd, newEnd, visitedLines);
+
+        // 길이가 0인 선 삭제
+        lines.removeAt(index);
+
+        // 선택 상태 초기화
+        selectedLineIndex = -1;
+
+        // 대각선 연결 정보 업데이트
+        for (final line in lines) {
+          if (line.isDiagonal && line.connectedPoints != null) {
+            final startInfo = line.connectedPoints!['start'] as List<int>;
+            final endInfo = line.connectedPoints!['end'] as List<int>;
+
+            // 삭제된 선을 참조하는 경우 -1로 설정
+            if (startInfo[0] == index) {
+              startInfo[0] = -1;
+            } else if (startInfo[0] > index) {
+              startInfo[0]--;
+            }
+
+            if (endInfo[0] == index) {
+              endInfo[0] = -1;
+            } else if (endInfo[0] > index) {
+              endInfo[0]--;
+            }
+          }
+        }
+      });
+
+      _updateFirebase();
+      return;
+    }
+
+    final unitX = dx / oldLen;
+    final unitY = dy / oldLen;
+
+    final newEnd = Offset(
+      line.start.dx + newLength * unitX,
+      line.start.dy + newLength * unitY,
+    );
+
+    setState(() {
+      if (line.isDiagonal) {
+        line.end = newEnd;
+      } else {
+        final oldEnd = line.end;
+        final shift = Offset(
+          newEnd.dx - line.end.dx,
+          newEnd.dy - line.end.dy,
+        );
+
+        line.end = newEnd;
+
+        void moveConnectedElements(
+            Offset oldPoint, Offset newPoint, Set<int> visitedLines) {
+          final pointShift = Offset(
+            newPoint.dx - oldPoint.dx,
+            newPoint.dy - oldPoint.dy,
+          );
+
+          for (int i = 0; i < lines.length; i++) {
+            if (visitedLines.contains(i)) continue;
+
+            final currentLine = lines[i];
+
+            if (currentLine.isDiagonal) {
+              if (currentLine.connectedPoints != null) {
+                final startInfo =
+                    currentLine.connectedPoints!['start'] as List<int>;
+                final endInfo =
+                    currentLine.connectedPoints!['end'] as List<int>;
+
+                if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
+                    (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
+                  currentLine.start = newPoint;
+                }
+
+                if ((currentLine.end.dx - oldPoint.dx).abs() < 0.01 &&
+                    (currentLine.end.dy - oldPoint.dy).abs() < 0.01) {
+                  currentLine.end = newPoint;
+                }
+              }
+            } else {
+              if ((currentLine.start.dx - oldPoint.dx).abs() < 0.01 &&
+                  (currentLine.start.dy - oldPoint.dy).abs() < 0.01) {
+                visitedLines.add(i);
+
+                currentLine.start = newPoint;
+                final newEndPoint = Offset(
+                  currentLine.end.dx + pointShift.dx,
+                  currentLine.end.dy + pointShift.dy,
+                );
+                final oldEndPoint = currentLine.end;
+                currentLine.end = newEndPoint;
+
+                moveConnectedElements(oldEndPoint, newEndPoint, visitedLines);
+              }
+            }
+          }
+
+          if ((currentPoint.dx - oldPoint.dx).abs() < 0.01 &&
+              (currentPoint.dy - oldPoint.dy).abs() < 0.01) {
+            currentPoint = newPoint;
+          }
+        }
+
         final visitedLines = <int>{index};
         moveConnectedElements(oldEnd, newEnd, visitedLines);
       }
     });
-    
+
     _updateFirebase();
   }
 
@@ -5057,7 +3984,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           isConnected = true;
           nextPoint = line.end;
         } else if ((line.end.dx - currentPoint.dx).abs() < 0.01 &&
-                   (line.end.dy - currentPoint.dy).abs() < 0.01) {
+            (line.end.dy - currentPoint.dy).abs() < 0.01) {
           isConnected = true;
           nextPoint = line.start;
         }
@@ -5075,48 +4002,29 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     return connectedLines;
   }
 
-  // 주어진 점에 직접 연결된 선들만 찾는 함수 (재귀 없음)
-  List<int> findDirectlyConnectedLines(Offset point) {
-    List<int> connectedLines = [];
-
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i];
-
-      if ((line.start.dx - point.dx).abs() < 0.01 &&
-          (line.start.dy - point.dy).abs() < 0.01) {
-        connectedLines.add(i);
-      } else if ((line.end.dx - point.dx).abs() < 0.01 &&
-                 (line.end.dy - point.dy).abs() < 0.01) {
-        connectedLines.add(i);
-      }
-    }
-
-    return connectedLines;
-  }
-  
   // 드래그 중인 그룹의 스냅 정보
   Map<String, Offset>? groupSnapInfo;
-  
+
   // 드래그 중인 그룹과 다른 그룹의 끝점 중 가장 가까운 점 찾기
   Map<String, Offset>? findNearestSnapPoint() {
     Offset? nearestSnapPoint;
     Offset? correspondingGroupPoint;
     double minDistance = double.infinity;
     const double snapThreshold = 30.0; // 스냅 거리 임계값
-    
+
     // 드래그 중인 그룹의 모든 끝점에 대해 검사
     for (int groupLineIdx in draggedGroupLines) {
       if (groupLineIdx >= lines.length) continue;
       final groupLine = lines[groupLineIdx];
-      
+
       // 그룹의 각 끝점에 대해
       for (final groupPoint in [groupLine.start, groupLine.end]) {
         // 다른 모든 선의 끝점과 비교
         for (int i = 0; i < lines.length; i++) {
           if (draggedGroupLines.contains(i)) continue; // 드래그 중인 그룹은 제외
-          
+
           final line = lines[i];
-          
+
           // 시작점 검사
           final startDist = (line.start - groupPoint).distance;
           if (startDist < minDistance && startDist < snapThreshold) {
@@ -5124,7 +4032,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             nearestSnapPoint = line.start;
             correspondingGroupPoint = groupPoint;
           }
-          
+
           // 끝점 검사
           final endDist = (line.end - groupPoint).distance;
           if (endDist < minDistance && endDist < snapThreshold) {
@@ -5133,7 +4041,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             correspondingGroupPoint = groupPoint;
           }
         }
-        
+
         // 빨간 점(선택된 끝점)과도 비교
         if (selectedEndpoint != null) {
           final redPointDist = (selectedEndpoint! - groupPoint).distance;
@@ -5145,7 +4053,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       }
     }
-    
+
     // 스냅할 점을 찾았으면, 그룹 점과 스냅 대상 점의 정보 반환
     if (nearestSnapPoint != null && correspondingGroupPoint != null) {
       return {
@@ -5153,7 +4061,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         'groupPoint': correspondingGroupPoint,
       };
     }
-    
+
     return null;
   }
 
@@ -5162,19 +4070,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('deleteLastLine: 삭제할 선이 없음');
       return;
     }
-    
+
     final lastIndex = lines.length - 1;
     print('deleteLastLine: 마지막 선 삭제 시작 - 인덱스: $lastIndex');
-    
+
     saveState();
-    
+
     setState(() {
       try {
         final lastLine = lines[lastIndex];
         final isDiagonal = lastLine.isDiagonal;
-        
+
         print('deleteLastLine: 삭제할 선 - isDiagonal: $isDiagonal');
-        
+
         // 현재 점 업데이트 (대각선이 아닌 경우에만)
         if (!isDiagonal && lastIndex > 0) {
           currentPoint = lastLine.start;
@@ -5184,24 +4092,24 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           currentPoint = const Offset(0, 0);
           print('deleteLastLine: 첫 번째 선 삭제 - 원점으로 복귀');
         }
-        
+
         // 선 삭제
         lines.removeAt(lastIndex);
         print('deleteLastLine: 선 삭제 완료 - 남은 선 개수: ${lines.length}');
-        
+
         // 대각선 연결 정보 업데이트
         for (final line in lines) {
           if (line.isDiagonal && line.connectedPoints != null) {
             final startInfo = line.connectedPoints!['start'] as List<int>;
             final endInfo = line.connectedPoints!['end'] as List<int>;
-            
+
             // 삭제된 선을 참조하는 경우 -1로 설정
             if (startInfo[0] == lastIndex) {
               startInfo[0] = -1;
             } else if (startInfo[0] > lastIndex) {
               startInfo[0]--;
             }
-            
+
             if (endInfo[0] == lastIndex) {
               endInfo[0] = -1;
             } else if (endInfo[0] > lastIndex) {
@@ -5209,11 +4117,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           }
         }
-        
+
         // 선택 상태 초기화
         selectedLineIndex = -1;
         selectedCircleIndex = -1;
-        
       } catch (e) {
         print('deleteLastLine: 오류 발생 - $e');
         // 오류 발생 시 안전하게 상태 초기화
@@ -5221,51 +4128,52 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         selectedCircleIndex = -1;
       }
     });
-    
+
     _updateFirebase();
     print('deleteLastLine: 완료');
   }
 
   void deleteSelectedLine() {
     if (selectedLineIndex < 0 || selectedLineIndex >= lines.length) {
-      print('deleteSelectedLine: 잘못된 인덱스 - selectedLineIndex: $selectedLineIndex, lines.length: ${lines.length}');
+      print(
+          'deleteSelectedLine: 잘못된 인덱스 - selectedLineIndex: $selectedLineIndex, lines.length: ${lines.length}');
       return;
     }
-    
+
     print('deleteSelectedLine: 선 삭제 시작 - 인덱스: $selectedLineIndex');
-    
+
     saveState();
-    
+
     setState(() {
       try {
         final selectedLine = lines[selectedLineIndex];
         final isDiagonal = selectedLine.isDiagonal;
-        
+
         print('deleteSelectedLine: 삭제할 선 - isDiagonal: $isDiagonal');
-        
+
         // 현재 점 업데이트 (대각선이 아닌 경우에만)
         if (!isDiagonal && selectedLineIndex > 0) {
           currentPoint = selectedLine.start;
           print('deleteSelectedLine: 현재 점 업데이트 - $currentPoint');
         }
-        
+
         // 선 삭제
         lines.removeAt(selectedLineIndex);
         print('deleteSelectedLine: 선 삭제 완료 - 남은 선 개수: ${lines.length}');
-        
+
         // 대각선 연결 정보 업데이트
         for (final line in lines) {
           if (line.isDiagonal && line.connectedPoints != null) {
             final startInfo = line.connectedPoints!['start'] as List<int>;
             final endInfo = line.connectedPoints!['end'] as List<int>;
-            
+
             // 삭제된 선을 참조하는 경우 -1로 설정
             if (startInfo[0] == selectedLineIndex) {
               startInfo[0] = -1;
             } else if (startInfo[0] > selectedLineIndex) {
               startInfo[0]--;
             }
-            
+
             if (endInfo[0] == selectedLineIndex) {
               endInfo[0] = -1;
             } else if (endInfo[0] > selectedLineIndex) {
@@ -5273,7 +4181,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           }
         }
-        
+
         // 모든 상태 초기화
         selectedLineIndex = -1;
         selectedCircleIndex = -1;
@@ -5284,9 +4192,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         arrowDirection = null;
         inlineDirection = "";
         isProcessingInput = false;
-        
+
         print('deleteSelectedLine: 상태 초기화 완료');
-        
       } catch (e) {
         print('deleteSelectedLine: 오류 발생 - $e');
         // 오류 발생 시 안전한 상태로 복원
@@ -5301,7 +4208,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isProcessingInput = false;
       }
     });
-    
+
     // Firebase 업데이트는 setState 완료 후 실행
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateFirebase();
@@ -5311,20 +4218,21 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void deleteSelectedCircle() {
     if (selectedCircleIndex < 0 || selectedCircleIndex >= circles.length) {
-      print('deleteSelectedCircle: 잘못된 인덱스 - selectedCircleIndex: $selectedCircleIndex, circles.length: ${circles.length}');
+      print(
+          'deleteSelectedCircle: 잘못된 인덱스 - selectedCircleIndex: $selectedCircleIndex, circles.length: ${circles.length}');
       return;
     }
-    
+
     print('deleteSelectedCircle: 원 삭제 시작 - 인덱스: $selectedCircleIndex');
-    
+
     saveState();
-    
+
     setState(() {
       try {
         // 원 삭제
         circles.removeAt(selectedCircleIndex);
         print('deleteSelectedCircle: 원 삭제 완료 - 남은 원 개수: ${circles.length}');
-        
+
         // 모든 상태 초기화
         selectedCircleIndex = -1;
         selectedLineIndex = -1;
@@ -5335,9 +4243,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         arrowDirection = null;
         inlineDirection = "";
         isProcessingInput = false;
-        
+
         print('deleteSelectedCircle: 상태 초기화 완료');
-        
       } catch (e) {
         print('deleteSelectedCircle: 오류 발생 - $e');
         // 오류 발생 시 안전한 상태로 복원
@@ -5352,7 +4259,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isProcessingInput = false;
       }
     });
-    
+
     // Firebase 업데이트는 setState 완료 후 실행
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateFirebase();
@@ -5365,22 +4272,21 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('deleteLastCircle: 삭제할 원이 없음');
       return;
     }
-    
+
     final lastIndex = circles.length - 1;
     print('deleteLastCircle: 마지막 원 삭제 시작 - 인덱스: $lastIndex');
-    
+
     saveState();
-    
+
     setState(() {
       try {
         // 원 삭제
         circles.removeAt(lastIndex);
         print('deleteLastCircle: 원 삭제 완료 - 남은 원 개수: ${circles.length}');
-        
+
         // 선택 상태 초기화
         selectedCircleIndex = -1;
         selectedLineIndex = -1;
-        
       } catch (e) {
         print('deleteLastCircle: 오류 발생 - $e');
         // 오류 발생 시 안전하게 상태 초기화
@@ -5388,7 +4294,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         selectedLineIndex = -1;
       }
     });
-    
+
     _updateFirebase();
     print('deleteLastCircle: 완료');
   }
@@ -5397,41 +4303,46 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     if (_isVoiceProcessing) {
       return '음성 처리 중...';
     }
-    
+
     if (_isListening) {
       return '음성 인식 중... 숫자를 말해주세요';
     }
-    
+
     if (_recognizedText.isNotEmpty && !_isListening) {
       return '인식된 음성: "$_recognizedText"';
     }
-    
+
     if (circleMode) {
-      return circleCenter == null 
-        ? '원 모드: 중심점을 클릭하세요'
-        : '원 모드: 지름을 입력하세요 (음성 입력 가능)';
+      return circleCenter == null
+          ? '원 모드: 중심점을 클릭하세요'
+          : '원 모드: 지름을 입력하세요 (음성 입력 가능)';
     }
-    
+
     if (showInlineInput) {
-      final directionText = inlineDirection.isEmpty ? "" : " ($inlineDirection)";
-      final speechText = _isListening && _recognizedText.isNotEmpty ? '\n인식중: "$_recognizedText"' : '';
+      final directionText =
+          inlineDirection.isEmpty ? "" : " ($inlineDirection)";
+      final speechText = _isListening && _recognizedText.isNotEmpty
+          ? '\n인식중: "$_recognizedText"'
+          : '';
       return '숫자 입력 후 Enter$directionText (음성 입력 가능)$speechText';
     }
-    
+
     if (isPointDragging) {
       return '점에서 점으로 선 그리는 중... (다른 점에서 놓으면 완료)';
     }
-    
+
     if (selectedLineIndex >= 0) {
       return '선 ${selectedLineIndex + 1}/${lines.length} 선택됨 (숫자 입력으로 길이 수정)';
     }
-    
+
     if (pendingOpeningType == 'window') {
       return '창문 모드: 방향키를 눌러주세요';
     }
-    
-    final speechText = _isListening && _recognizedText.isNotEmpty ? '\n인식중: "$_recognizedText"' : '';
-    
+
+    final speechText = _isListening && _recognizedText.isNotEmpty
+        ? '\n인식중: "$_recognizedText"'
+        : '';
+
     if (diagonalMode) {
       return '점연결 모드: 점을 터치한 채로 드래그해서 선을 그리세요$speechText';
     } else {
@@ -5442,63 +4353,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   void _handleTap(Offset position) {
     print('_handleTap 호출됨 - 위치: $position');
     print('현재 모드 - circleMode: $circleMode, isPointDragging: $isPointDragging');
-    
+
     // 페이지 드롭다운이 열려있으면 닫기
     if (isPageDropdownOpen) {
       _hideDropdownOverlay();
     }
-    
+
     // 점 드래그 중이면 탭 무시
     if (isPointDragging) {
       print('점 드래그 중 - 탭 무시');
       return;
-    }
-
-    // 선 근처 더블탭 감지 (위치 기반) - 원 모드가 아닐 때만
-    if (!circleMode && !distanceMeasureMode) {
-      final now = DateTime.now();
-      final lineIndex = _findLineNear(position);
-
-      if (lineIndex != null) {
-        final isDoubleTap = lastTapTime != null &&
-            lastTapPositionForDouble != null &&
-            now.difference(lastTapTime!).inMilliseconds < 400 &&
-            (position - lastTapPositionForDouble!).distance < 50;
-
-        if (isDoubleTap) {
-          // 더블탭: 연결된 모든 선 선택
-          print('더블탭 감지 - 연결된 모든 선 선택');
-          final line = lines[lineIndex];
-          final connectedFromStart = findConnectedLines(line.start);
-          final connectedFromEnd = findConnectedLines(line.end);
-
-          setState(() {
-            selectedGroupLines = {lineIndex, ...connectedFromStart, ...connectedFromEnd};
-            selectedLineIndex = lineIndex;
-            selectedCircleIndex = -1;
-            lastTapTime = null;
-            lastTapPositionForDouble = null;
-          });
-
-          HapticFeedback.selectionClick();
-          print('더블탭 - 선택된 그룹: $selectedGroupLines');
-          return;
-        }
-
-        // 선 탭 시에만 시간/위치 저장 (선 더블탭 감지용)
-        lastTapTime = now;
-        lastTapPositionForDouble = position;
-      }
-      // 빈 화면 탭 시에는 lastTapTime/lastTapPositionForDouble을 여기서 업데이트하지 않음
-      // (빈 화면 더블탭은 아래 별도 섹션에서 처리)
-
-      // 그룹이 선택된 상태에서 일반 탭 시 그룹 선택 해제
-      if (selectedGroupLines.isNotEmpty) {
-        print('그룹 선택 상태에서 일반 탭 - 그룹 선택 해제');
-        setState(() {
-          selectedGroupLines.clear();
-        });
-      }
     }
 
     // 원 모드 처리
@@ -5506,15 +4370,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('원 모드로 이동');
       // 원 모드에서는 인라인 입력을 취소하지 않음 (다른 끝점 클릭 시 위치 이동을 위해)
       _handleCircleClick(position);
-      return;  // 원 모드에서는 다른 처리 없이 즉시 종료
+      return; // 원 모드에서는 다른 처리 없이 즉시 종료
     }
-    
+
     // 일반 모드 처리
     // 빈 화면 클릭 시 인라인 입력을 유지 (삭제됨)
     // if (showInlineInput) {
     //   cancelInlineInput();
     // }
-    
+
     // 원 모드가 아닐 때만 끝점 이동 처리
     if (!circleMode) {
       final endpointInfo = _findEndpointNear(position);
@@ -5526,12 +4390,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         if (distanceMeasureMode) {
           print('거리측정 모드 - 점 클릭: $clickedPoint');
           if (firstSelectedPointForDistance == null &&
-              firstSelectedLineForDistance == null &&
-              firstSelectedCircleForDistance == null) {
-            // 첫 번째 점 선택 - currentPoint를 이동하지 않음
+              firstSelectedLineForDistance == null) {
+            // 첫 번째 점 선택
             setState(() {
               firstSelectedPointForDistance = clickedPoint;
               selectedEndpoint = clickedPoint;
+              currentPoint = clickedPoint;
             });
             print('첫 번째 점 선택됨');
           } else if (firstSelectedPointForDistance == clickedPoint) {
@@ -5543,7 +4407,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             print('점 선택 해제');
           } else if (firstSelectedPointForDistance != null) {
             // 점이 선택된 상태에서 다른 점 클릭 - 점과 점 사이 거리 측정
-            final measurement = _calculatePointToPointDistance(firstSelectedPointForDistance!, clickedPoint);
+            final measurement = _calculatePointToPointDistance(
+                firstSelectedPointForDistance!, clickedPoint);
             if (measurement != null) {
               setState(() {
                 distanceMeasurements.add(measurement);
@@ -5555,7 +4420,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           } else if (firstSelectedLineForDistance != null) {
             // 선이 선택된 상태에서 점 클릭 - 선과 점 사이 거리 측정
-            final measurement = _calculatePointToLineDistance(clickedPoint, firstSelectedLineForDistance!);
+            final measurement = _calculatePointToLineDistance(
+                clickedPoint, firstSelectedLineForDistance!);
             if (measurement != null) {
               setState(() {
                 distanceMeasurements.add(measurement);
@@ -5566,108 +4432,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               });
               print('선-점 거리 측정 완료: ${measurement.distance.toInt()}');
             }
-          } else if (firstSelectedCircleForDistance != null) {
-            // 원이 선택된 상태에서 점 클릭 - 원과 점 사이 거리 측정
-            final measurement = _calculateCircleToPointDistance(firstSelectedCircleForDistance!, clickedPoint);
-            if (measurement != null) {
-              setState(() {
-                distanceMeasurements.add(measurement);
-                firstSelectedCircleForDistance = null;
-                selectedCircleIndex = -1;
-                selectedEndpoint = null;
-                distanceMeasureMode = false;
-              });
-              print('원-점 거리 측정 완료: ${measurement.distance.toInt()}');
-            }
           }
           return;
         }
 
         setState(() {
-          // 모바일/태블릿 모드: 순환 선택 로직
-          if (isMobile || isTablet) {
-            // 같은 끝점을 다시 탭한 경우
-            if (_lastTappedEndpoint != null &&
-                (_lastTappedEndpoint!.dx - clickedPoint.dx).abs() < 0.01 &&
-                (_lastTappedEndpoint!.dy - clickedPoint.dy).abs() < 0.01) {
-
-              // 연결된 선들이 없으면 초기화
-              if (_endpointConnectedLines.isEmpty) {
-                _endpointConnectedLines = findDirectlyConnectedLines(clickedPoint);
-              }
-
-              // 연결된 선이 있으면 순환
-              if (_endpointConnectedLines.isNotEmpty) {
-                _endpointCycleIndex++;
-
-                // 모든 선을 다 순회했으면 다시 끝점 선택으로
-                if (_endpointCycleIndex >= _endpointConnectedLines.length) {
-                  _endpointCycleIndex = -1;
-                  selectedLineIndex = -1;
-                  selectedEndpoint = clickedPoint;
-                  selectedEndpointLineIndex = endpointInfo['index'] as int?;
-                  selectedEndpointType = endpointInfo['type'] as String?;
-                  print('순환 완료 - 끝점 선택: $clickedPoint');
-                } else {
-                  // 연결된 선 선택
-                  selectedLineIndex = _endpointConnectedLines[_endpointCycleIndex];
-                  selectedEndpoint = null;
-                  selectedEndpointLineIndex = null;
-                  selectedEndpointType = null;
-                  print('연결된 선 선택: $selectedLineIndex (${_endpointCycleIndex + 1}/${_endpointConnectedLines.length})');
-                }
-              } else {
-                // 연결된 선이 없으면 끝점 선택 해제
-                selectedEndpoint = null;
-                selectedEndpointLineIndex = null;
-                selectedEndpointType = null;
-                _lastTappedEndpoint = null;
-                _endpointCycleIndex = -1;
-                print('연결된 선 없음 - 끝점 선택 해제');
-              }
-            } else {
-              // 새로운 끝점 선택
-              _lastTappedEndpoint = clickedPoint;
-              _endpointConnectedLines = findDirectlyConnectedLines(clickedPoint);
-              _endpointCycleIndex = -1;
-
-              selectedEndpoint = clickedPoint;
-              currentPoint = clickedPoint;
-              selectedEndpointLineIndex = endpointInfo['index'] as int?;
-              selectedEndpointType = endpointInfo['type'] as String?;
-              selectedLineIndex = -1;
-              print('새로운 끝점 선택: $clickedPoint, 연결된 선: ${_endpointConnectedLines.length}개');
-
-              // 다른 점을 클릭했을 때 입력한 숫자 초기화
-              if (showInlineInput) {
-                inlineController.clear();
-                inlineDirection = "";
-              }
-            }
+          // 이미 선택된 끝점을 다시 클릭하면 선택 해제
+          if (selectedEndpoint == clickedPoint) {
+            selectedEndpoint = null;
+            selectedEndpointLineIndex = null;
+            selectedEndpointType = null;
           } else {
-            // 데스크톱 모드: 기존 로직
-            if (selectedEndpoint == clickedPoint) {
-              selectedEndpoint = null;
-              selectedEndpointLineIndex = null;
-              selectedEndpointType = null;
-            } else {
-              // 새로운 끝점 선택하고 currentPoint도 변경
-              selectedEndpoint = clickedPoint;
-              currentPoint = clickedPoint;
-              selectedEndpointLineIndex = endpointInfo['index'] as int?;
-              selectedEndpointType = endpointInfo['type'] as String?;
-
-              // 다른 점을 클릭했을 때 입력한 숫자 초기화
-              if (showInlineInput) {
-                inlineController.clear();
-                inlineDirection = "";
-              }
-            }
-
-            // 끝점 클릭 시 선/원 선택 상태 초기화
-            selectedLineIndex = -1;
+            // 새로운 끝점 선택하고 currentPoint도 변경
+            selectedEndpoint = clickedPoint;
+            currentPoint = clickedPoint;
+            selectedEndpointLineIndex = endpointInfo['index'] as int?;
+            selectedEndpointType = endpointInfo['type'] as String?;
           }
 
+          // 끝점 클릭 시 선/원 선택 상태 초기화
+          selectedLineIndex = -1;
           selectedCircleIndex = -1;
           hoveredLineIndex = null;
 
@@ -5680,7 +4464,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         return;
       }
     }
-    
+
     // 거리측정선 클릭 감지 (선/원 선택보다 우선, 거리측정 모드가 아닐 때)
     if (!circleMode && !distanceMeasureMode) {
       final clickedMeasurementIndex = _findMeasurementNear(position);
@@ -5703,35 +4487,38 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       if (lineIndex != null) {
         // 더블클릭 감지
         final now = DateTime.now();
-        final isDoubleClick = lastTapTime != null && 
+        final isDoubleClick = lastTapTime != null &&
             now.difference(lastTapTime!).inMilliseconds < 300 &&
             selectedLineIndex == lineIndex;
-        
+
         if (isDoubleClick) {
           // 더블클릭: 연결된 모든 선 선택
           print('선 더블클릭 - 연결된 모든 선 선택');
           final line = lines[lineIndex];
-          
+
           // 시작점과 끝점에서 연결된 모든 선 찾기
           final connectedFromStart = findConnectedLines(line.start);
           final connectedFromEnd = findConnectedLines(line.end);
-          
+
           setState(() {
             // 클릭한 선 자체도 포함하여 그룹 설정
-            selectedGroupLines = {lineIndex, ...connectedFromStart, ...connectedFromEnd};
+            selectedGroupLines = {
+              lineIndex,
+              ...connectedFromStart,
+              ...connectedFromEnd
+            };
             selectedLineIndex = lineIndex;
             selectedCircleIndex = -1;
             lastTapTime = null; // 더블클릭 후 리셋
             print('더블클릭 - 선택된 그룹: $selectedGroupLines');
           });
-          
+
           HapticFeedback.selectionClick();
         } else if (distanceMeasureMode) {
           // 거리측정 모드에서 선 클릭
           print('거리측정 모드 - 선 클릭: $lineIndex');
           if (firstSelectedLineForDistance == null &&
-              firstSelectedPointForDistance == null &&
-              firstSelectedCircleForDistance == null) {
+              firstSelectedPointForDistance == null) {
             // 첫 번째 선 선택
             setState(() {
               firstSelectedLineForDistance = lineIndex;
@@ -5748,7 +4535,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             print('선 선택 해제');
           } else if (firstSelectedPointForDistance != null) {
             // 점이 선택된 상태에서 선 클릭 - 점과 선 사이 거리 측정
-            final measurement = _calculatePointToLineDistance(firstSelectedPointForDistance!, lineIndex);
+            final measurement = _calculatePointToLineDistance(
+                firstSelectedPointForDistance!, lineIndex);
             if (measurement != null) {
               setState(() {
                 distanceMeasurements.add(measurement);
@@ -5758,21 +4546,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               });
               print('점-선 거리 측정 완료: ${measurement.distance.toInt()}');
             }
-          } else if (firstSelectedCircleForDistance != null) {
-            // 원이 선택된 상태에서 선 클릭 - 원과 선 사이 거리 측정
-            final measurement = _calculateCircleToLineDistance(firstSelectedCircleForDistance!, lineIndex);
-            if (measurement != null) {
-              setState(() {
-                distanceMeasurements.add(measurement);
-                firstSelectedCircleForDistance = null;
-                selectedCircleIndex = -1;
-                distanceMeasureMode = false;
-              });
-              print('원-선 거리 측정 완료: ${measurement.distance.toInt()}');
-            }
           } else {
             // 선이 선택된 상태에서 다른 선 클릭 - 선과 선 사이 거리 측정
-            final measurement = _calculateLineToLineDistance(firstSelectedLineForDistance!, lineIndex);
+            final measurement = _calculateLineToLineDistance(
+                firstSelectedLineForDistance!, lineIndex);
             if (measurement != null) {
               setState(() {
                 distanceMeasurements.add(measurement);
@@ -5809,108 +4586,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             selectedCircleIndex = -1; // 원 선택 해제
             selectedGroupLines.clear(); // 그룹 선택 해제
             lastTapTime = now;
-
-            // 창문 선을 선택했는지 확인
-            if (lines[lineIndex].openingType == 'window') {
-              selectedWindowLineIndex = lineIndex;
-              showWindowProperties = true;
-
-              // 창문 폭을 자동으로 계산 (선의 길이)
-              final line = lines[lineIndex];
-              final dx = line.end.dx - line.start.dx;
-              final dy = line.end.dy - line.start.dy;
-              final windowWidth = math.sqrt(dx * dx + dy * dy);
-
-              // 창문 속성 값을 설정
-              lines[lineIndex].windowWidth = windowWidth;
-              windowWidthController.text = windowWidth.toInt().toString();
-              windowHeightController.text = lines[lineIndex].windowHeight?.toString() ?? '';
-              windowBottomHeightController.text = lines[lineIndex].windowBottomHeight?.toString() ?? '';
-              windowTopHeightController.text = lines[lineIndex].windowTopHeight?.toString() ?? '';
-            } else {
-              // 창문이 아닌 선을 선택한 경우
-              selectedWindowLineIndex = null;
-              showWindowProperties = false;
-              activeWindowField = null;
-              windowWidthController.clear();
-              windowHeightController.clear();
-              windowBottomHeightController.clear();
-              windowTopHeightController.clear();
-            }
           });
         }
       } else if (circleIndex != null) {
-        // 거리측정 모드에서 원 클릭 처리
-        if (distanceMeasureMode) {
-          print('거리측정 모드 - 원 클릭: $circleIndex');
-          if (firstSelectedLineForDistance == null &&
-              firstSelectedPointForDistance == null &&
-              firstSelectedCircleForDistance == null) {
-            // 첫 번째 원 선택
-            setState(() {
-              firstSelectedCircleForDistance = circleIndex;
-              selectedCircleIndex = circleIndex;
-              selectedLineIndex = -1;
-            });
-            print('첫 번째 원 선택됨: $circleIndex');
-          } else if (firstSelectedCircleForDistance == circleIndex) {
-            // 같은 원을 다시 클릭하면 선택 해제
-            setState(() {
-              firstSelectedCircleForDistance = null;
-              selectedCircleIndex = -1;
-            });
-            print('원 선택 해제');
-          } else if (firstSelectedCircleForDistance != null) {
-            // 원이 선택된 상태에서 다른 원 클릭 - 원과 원 사이 거리 측정
-            final measurement = _calculateCircleToCircleDistance(firstSelectedCircleForDistance!, circleIndex);
-            if (measurement != null) {
-              setState(() {
-                distanceMeasurements.add(measurement);
-                firstSelectedCircleForDistance = null;
-                selectedCircleIndex = -1;
-                distanceMeasureMode = false;
-              });
-              print('원-원 거리 측정 완료: ${measurement.distance.toInt()}');
-            }
-          } else if (firstSelectedLineForDistance != null) {
-            // 선이 선택된 상태에서 원 클릭 - 선과 원 사이 거리 측정
-            final measurement = _calculateCircleToLineDistance(circleIndex, firstSelectedLineForDistance!);
-            if (measurement != null) {
-              setState(() {
-                distanceMeasurements.add(measurement);
-                firstSelectedLineForDistance = null;
-                selectedLineIndex = -1;
-                distanceMeasureMode = false;
-              });
-              print('선-원 거리 측정 완료: ${measurement.distance.toInt()}');
-            }
-          } else if (firstSelectedPointForDistance != null) {
-            // 점이 선택된 상태에서 원 클릭 - 점과 원 사이 거리 측정
-            final measurement = _calculateCircleToPointDistance(circleIndex, firstSelectedPointForDistance!);
-            if (measurement != null) {
-              setState(() {
-                distanceMeasurements.add(measurement);
-                firstSelectedPointForDistance = null;
-                selectedEndpoint = null;
-                distanceMeasureMode = false;
-              });
-              print('점-원 거리 측정 완료: ${measurement.distance.toInt()}');
-            }
-          }
-        } else {
-          // 일반 원 선택
-          setState(() {
-            selectedCircleIndex = circleIndex;
-            selectedLineIndex = -1; // 선 선택 해제
-          });
-        }
+        // 원 선택
+        setState(() {
+          selectedCircleIndex = circleIndex;
+          selectedLineIndex = -1; // 선 선택 해제
+        });
       } else {
-        // 빈 화면 클릭 - 더블클릭 감지 (시간 + 위치 모두 체크)
+        // 빈 화면 클릭 - 더블클릭 감지
         final now = DateTime.now();
         final isDoubleClick = lastTapTime != null &&
-            lastTapPositionForDouble != null &&
-            now.difference(lastTapTime!).inMilliseconds < 300 &&
-            (position - lastTapPositionForDouble!).distance < 50; // 50px 이내
+            now.difference(lastTapTime!).inMilliseconds < 300;
 
         if (isDoubleClick) {
           // 더블클릭: 뷰 맞춤 실행 (모든 모드에서 동일하게 fitViewToDrawing 사용)
@@ -5918,15 +4606,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           fitViewToDrawing();
           setState(() {
             lastTapTime = null; // 더블클릭 후 리셋
-            lastTapPositionForDouble = null;
           });
         } else {
-          // 일반 클릭 - 선택 해제
+          // 일반 클릭
           setState(() {
             selectedLineIndex = -1;
             selectedCircleIndex = -1;
             selectedMeasurementIndex = null; // 거리측정 선택 해제
-            selectedMemoIndex = null; // 메모 선택 해제
             // 파란선 그룹이 선택되어 있는 경우에는 selectedEndpoint를 유지
             if (selectedGroupLines.isEmpty) {
               selectedEndpoint = null; // 빈 곳 클릭 시 끝점 선택도 해제
@@ -5935,15 +4621,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
             selectedGroupLines.clear(); // 그룹 선택 해제
             lastTapTime = now;
-            lastTapPositionForDouble = position; // 빈 화면 탭 위치 저장
-
-            // 창문 속성 입력 필드 숨기기
-            selectedWindowLineIndex = null;
-            showWindowProperties = false;
-            activeWindowField = null;
-            windowWidthController.clear();
-            windowHeightController.clear();
-            windowBottomHeightController.clear();
 
             // 빈 곳 클릭 시에는 화살표 상태를 유지
           });
@@ -5954,51 +4631,54 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void _handleCircleClick(Offset position) {
     print('원 클릭: $position');
-    
+
     // 가장 가까운 끝점 찾기
     final endpointInfo = _findEndpointNear(position);
     Offset? closestPoint = endpointInfo?['point'] as Offset?;
-    
+
     print('끝점 찾기 결과: $endpointInfo');
-    
+
     // 끝점을 찾지 못하면 원을 생성하지 않음
     if (closestPoint == null) {
       print('끝점을 찾지 못함 - 원 생성 취소');
       return;
     }
-    
+
     final centerPoint = closestPoint;
-    
+
     print('원 중심점 후보: $centerPoint (끝점 발견: true)');
-    
+
     // 중심점 유효성 검사
-    if (centerPoint.dx.isNaN || centerPoint.dy.isNaN || 
-        centerPoint.dx.isInfinite || centerPoint.dy.isInfinite) {
+    if (centerPoint.dx.isNaN ||
+        centerPoint.dy.isNaN ||
+        centerPoint.dx.isInfinite ||
+        centerPoint.dy.isInfinite) {
       print('원 중심점 오류: 유효하지 않은 좌표 ($centerPoint)');
       return;
     }
-    
+
     // 인라인 입력이 표시되어 있고 원이 아직 생성되지 않은 상태에서 다른 끝점 클릭
-    print('원 모드 체크 - showInlineInput: $showInlineInput, circleCenter: $circleCenter, circleMode: $circleMode');
+    print(
+        '원 모드 체크 - showInlineInput: $showInlineInput, circleCenter: $circleCenter, circleMode: $circleMode');
     if (showInlineInput && circleCenter != null && circleMode) {
       print('원 중심점 변경 조건 만족!');
       print('이전 중심점: $circleCenter');
       print('새로운 중심점: $centerPoint');
-      
+
       setState(() {
         circleCenter = centerPoint;
         // 입력된 텍스트는 유지
       });
-      
+
       print('setState 후 circleCenter: $circleCenter');
-      
+
       // 포커스 유지
       WidgetsBinding.instance.addPostFrameCallback((_) {
         inlineFocus.requestFocus();
       });
       return;
     }
-    
+
     // 첫 번째 클릭 또는 새로운 원 생성
     if (circleCenter == null) {
       setState(() {
@@ -6009,7 +4689,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         hoveredLineIndex = null;
       });
       print('원 중심점 설정 완료: $circleCenter (선택 상태 초기화)');
-      
+
       // 지름 입력 모드로 전환
       setState(() {
         showInlineInput = true;
@@ -6017,16 +4697,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         arrowDirection = null;
         inlineDirection = "";
       });
-      
+
       print('지름 입력 모드로 전환 완료');
-      
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         inlineFocus.requestFocus();
       });
     }
   }
-
-
 
   // 점 간 드래그 선 그리기 함수들
   void _handleCirclePanStart(DragStartDetails details) {
@@ -6046,79 +4724,51 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('원 모드 중 - 점 드래그 무시');
       return;
     }
-    
+
     final position = details.localPosition;
     print('\n=== 점연결 드래그 시작: 터치위치=$position ===');
-    
+
     // 터치/클릭 위치 업데이트 (디버깅용)
     setState(() {
       mousePosition = position;
     });
-    
+
     final startPoint = _findNearestEndpoint(position);
     print('끝점 찾기 결과: ${startPoint != null ? "찾음 $startPoint" : "못찾음"}');
-    
-    // 그룹이 선택된 상태에서 그룹에 속한 선이나 점을 드래그하면 그룹 이동
+
+    // 그룹이 선택된 상태에서는 화면 아무 곳이나 드래그해도 그룹 이동
     print('그룹 선택 확인 - selectedGroupLines: ${selectedGroupLines.length}개');
     if (selectedGroupLines.isNotEmpty) {
-      // 드래그 시작 위치에서 선이나 끝점 찾기
-      final lineIndex = _findLineNear(position);
-      final endpointInfo = _findEndpointNear(position);
+      print('그룹이 선택됨 - 화면 아무 곳 드래그로 그룹 이동 시작');
 
-      // 그룹에 속한 선을 드래그했는지 확인
-      bool isDraggingGroupLine = lineIndex != null && selectedGroupLines.contains(lineIndex);
+      // 드래그 시작 위치를 모델 좌표로 변환
+      final dragStartModelPos = _screenToModel(position);
 
-      // 그룹에 속한 끝점을 드래그했는지 확인
-      bool isDraggingGroupEndpoint = false;
-      if (endpointInfo != null) {
-        final endpointLineIndex = endpointInfo['index'] as int;
-        isDraggingGroupEndpoint = selectedGroupLines.contains(endpointLineIndex);
-      }
+      setState(() {
+        isGroupDragging = true;
+        groupDragStartPoint = dragStartModelPos;
+        groupDragCurrentPoint = dragStartModelPos;
+        draggedGroupLines = Set.from(selectedGroupLines);
 
-      if (isDraggingGroupLine || isDraggingGroupEndpoint) {
-        print('그룹에 속한 선/점 드래그 - 그룹 이동 시작');
-
-        // 되돌리기를 위해 현재 상태 저장
-        saveState();
-
-        // 드래그 시작 위치를 모델 좌표로 변환
-        final dragStartModelPos = _screenToModel(position);
-
-        setState(() {
-          isGroupDragging = true;
-          groupDragStartPoint = dragStartModelPos;
-          groupDragCurrentPoint = dragStartModelPos;
-          draggedGroupLines = Set.from(selectedGroupLines);
-
-          // 원래 위치 저장
-          originalLineStarts.clear();
-          originalLineEnds.clear();
-          for (int i in draggedGroupLines) {
-            if (i < lines.length) {
-              originalLineStarts[i] = lines[i].start;
-              originalLineEnds[i] = lines[i].end;
-            }
+        // 원래 위치 저장
+        originalLineStarts.clear();
+        originalLineEnds.clear();
+        for (int i in draggedGroupLines) {
+          if (i < lines.length) {
+            originalLineStarts[i] = lines[i].start;
+            originalLineEnds[i] = lines[i].end;
           }
+        }
 
-          _isPanning = false;
-          _isScaling = false;
-          isPointDragging = false;
-        });
+        _isPanning = false;
+        _isScaling = false;
+        isPointDragging = false;
+      });
 
-        HapticFeedback.selectionClick();
-        return;
-      } else {
-        print('그룹에 속하지 않은 곳 드래그 - 화면 이동');
-        // 그룹에 속하지 않은 곳을 드래그하면 화면 이동
-        setState(() {
-          _isPanning = true;
-          _lastPanPosition = position;
-          isPointDragging = false;
-        });
-        return;
-      }
+      HapticFeedback.selectionClick();
+      return;
     }
-    
+
     // 대각선 모드가 아니고 그룹도 선택되지 않았거나 인라인 입력 중이면 화면 이동만 허용
     if ((!diagonalMode && selectedGroupLines.isEmpty) || showInlineInput) {
       print('대각선 모드가 아니고 그룹도 선택되지 않았거나 인라인 입력 중 - 점 드래그 비활성화, 화면 이동만 허용');
@@ -6128,27 +4778,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         _lastPanPosition = position;
         isPointDragging = false;
       });
-      print('화면 이동 시작: $position (대각선 모드: $diagonalMode, 그룹 선택: ${selectedGroupLines.length}개, 인라인 입력: $showInlineInput)');
+      print(
+          '화면 이동 시작: $position (대각선 모드: $diagonalMode, 그룹 선택: ${selectedGroupLines.length}개, 인라인 입력: $showInlineInput)');
       return;
     }
-    
+
     // 아이패드 웹에서 멀티터치 중이면 무시
     if (isTablet && _touchCount > 1) {
       print('아이패드 웹 - 멀티터치 중이므로 점 드래그 무시');
       return;
     }
-    
+
     // Shift 키가 눌려있거나 그룹이 선택된 상태에서 끝점 근처에서 시작한 경우 그룹 드래그 시작
-    final isShiftPressed = HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-                          HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight);
-    
+    final isShiftPressed = HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.shiftLeft) ||
+        HardwareKeyboard.instance.logicalKeysPressed
+            .contains(LogicalKeyboardKey.shiftRight);
+
     // Shift 키를 누른 상태에서 끝점 드래그 (기존 기능)
     if (isShiftPressed && startPoint != null) {
       print('Shift + 드래그로 그룹 이동 시작: $startPoint');
-
-      // 되돌리기를 위해 현재 상태 저장
-      saveState();
-
       setState(() {
         isGroupDragging = true;
         groupDragStartPoint = startPoint;
@@ -6171,7 +4820,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       HapticFeedback.selectionClick();
       return;
     }
-    
+
     // 점 근처에서 시작한 경우에만 점 드래그 시작 (그룹이 선택되지 않은 경우에만)
     if (startPoint != null && selectedGroupLines.isEmpty && diagonalMode) {
       setState(() {
@@ -6180,7 +4829,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         pointDragEnd = startPoint;
         _isPanning = false; // 점 드래그 중에는 화면 이동 비활성화
         _isScaling = false; // 점 드래그 중에는 스케일 제스처 비활성화
-        
+
         // 다른 선택 상태 초기화
         selectedLineIndex = -1;
         selectedCircleIndex = -1;
@@ -6190,7 +4839,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         selectedEndpointLineIndex = null;
         selectedEndpointType = null;
       });
-      
+
       // 햅틱 피드백
       HapticFeedback.selectionClick();
       print('점 드래그 시작: $startPoint');
@@ -6204,30 +4853,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('화면 이동 시작: $position (아이패드 웹: $isTablet)');
     }
   }
-  
+
   void _handlePointDragUpdate(DragUpdateDetails details) {
     final position = details.localPosition;
-    
-    print('드래그 업데이트 - isGroupDragging: $isGroupDragging, isPointDragging: $isPointDragging');
-    
+
+    print(
+        '드래그 업데이트 - isGroupDragging: $isGroupDragging, isPointDragging: $isPointDragging');
+
     if (isGroupDragging && groupDragStartPoint != null) {
       // 그룹 드래그 처리
       final currentModelPos = _screenToModel(position);
       final offset = currentModelPos - groupDragStartPoint!;
-      
+
       print('그룹 드래그 중 - offset: $offset');
-      
+
       setState(() {
         groupDragCurrentPoint = currentModelPos;
-        
+
         // 드래그 중인 그룹의 모든 선들을 이동
         for (int i in draggedGroupLines) {
-          if (originalLineStarts.containsKey(i) && originalLineEnds.containsKey(i)) {
+          if (originalLineStarts.containsKey(i) &&
+              originalLineEnds.containsKey(i)) {
             lines[i].start = originalLineStarts[i]! + offset;
             lines[i].end = originalLineEnds[i]! + offset;
           }
         }
-        
+
         // 스냅 대상 찾기
         groupSnapInfo = findNearestSnapPoint();
         if (groupSnapInfo != null) {
@@ -6240,7 +4891,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     } else if (isPointDragging && pointDragStart != null) {
       // 점 드래그 처리
       final nearestPoint = _findNearestEndpoint(position);
-      
+
       setState(() {
         if (nearestPoint != null) {
           // 가까운 점이 있으면 스냅
@@ -6260,21 +4911,21 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('화면 이동: $delta, 새 viewOffset: $viewOffset');
     }
   }
-  
+
   void _handlePointDragEnd(DragEndDetails details) {
     print('=== 드래그 종료 ===');
-    
+
     if (isGroupDragging && groupDragStartPoint != null) {
       print('그룹 드래그 종료 처리');
-      
+
       // 스냅 대상이 있으면 그 위치로 정확히 이동
       if (groupSnapInfo != null) {
         final snapTarget = groupSnapInfo!['snapTarget'] as Offset;
         final groupPoint = groupSnapInfo!['groupPoint'] as Offset;
-        
+
         // 스냅을 위한 오프셋 계산
         final snapOffset = snapTarget - groupPoint;
-        
+
         setState(() {
           // 최종 위치로 이동
           for (int i in draggedGroupLines) {
@@ -6282,11 +4933,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             lines[i].end = lines[i].end + snapOffset;
           }
         });
-        
+
         // 햅틱 피드백
         HapticFeedback.mediumImpact();
       }
-      
+
       // 상태 초기화
       setState(() {
         isGroupDragging = false;
@@ -6300,19 +4951,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       });
 
       _updateFirebase();
+      saveState();
       return;
     }
-    
+
     if (isPointDragging && pointDragStart != null && pointDragEnd != null) {
       print('점 드래그 종료 처리');
-    
+
       // 시작점과 끝점이 같으면 취소
       if (pointDragStart == pointDragEnd) {
         print('시작점과 끝점이 같음 - 점 드래그 취소');
         _cancelPointDrag();
         return;
       }
-      
+
       // 최소 거리 체크
       final distance = (pointDragEnd! - pointDragStart!).distance;
       if (distance < 10.0) {
@@ -6320,20 +4972,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         _cancelPointDrag();
         return;
       }
-      
+
       // 끝점이 스냅된 위치인지 확인 (허공에 놓으면 취소)
       final screenEndPoint = _modelToScreen(pointDragEnd!);
       final snapPoint = _findNearestEndpoint(screenEndPoint);
-      
+
       if (snapPoint == null) {
         print('끝점이 스냅 위치가 아님 - 허공에 놓음, 선 생성 취소');
         _cancelPointDrag();
         return;
       }
-      
+
       // 끝점을 스냅된 위치로 보정
       pointDragEnd = snapPoint;
-      
+
       // 일반 선 생성 (대각선도 가능)
       saveState();
       setState(() {
@@ -6343,22 +4995,22 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           openingType: pendingOpeningType,
           isDiagonal: true, // 점 연결 모드로 생성된 선은 대각선으로 표시
         ));
-        
+
         // 현재 점을 끝점으로 이동
         currentPoint = pointDragEnd!;
         pendingOpeningType = null;
       });
-      
+
       // 성공 햅틱 피드백
       HapticFeedback.lightImpact();
       print('점 드래그 선 생성 완료 - 길이: $distance');
-      
+
       // 점 연결 완료 후 diagonalMode 해제
       setState(() {
         diagonalMode = false;
       });
       print('점 연결 완료 - diagonalMode 해제');
-      
+
       _updateFirebase();
       _resetPointDrag();
     } else if (_isPanning) {
@@ -6373,12 +5025,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       _cancelPointDrag();
     }
   }
-  
+
   void _cancelPointDrag() {
     print('점 드래그 취소');
     _resetPointDrag();
   }
-  
+
   // 도면의 중심을 모델 좌표로 계산
   Offset _getDrawingCenterModel() {
     if (lines.isEmpty && circles.isEmpty) {
@@ -6426,26 +5078,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     // 다시 라디안으로 변환
     return snappedDegrees * math.pi / 180;
   }
-  
+
   // 화면 회전을 고려한 방향 변환
   String _transformDirectionForRotation(String direction) {
     // 현재 회전 각도를 도 단위로 변환
     double rotationDegrees = (viewRotation * 180 / math.pi) % 360;
     if (rotationDegrees < 0) rotationDegrees += 360;
-    
+
     // 90도 단위로 반올림
     int rotationSteps = ((rotationDegrees + 45) ~/ 90) % 4;
-    
+
     // 방향 변환 매핑
     const directions = ['Up', 'Right', 'Down', 'Left'];
     int directionIndex = directions.indexOf(direction);
     if (directionIndex == -1) return direction;
-    
+
     // 회전에 따라 방향 조정
     int newIndex = (directionIndex + rotationSteps) % 4;
     return directions[newIndex];
   }
-  
+
   void _resetPointDrag() {
     setState(() {
       isPointDragging = false;
@@ -6461,26 +5113,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       print('유효하지 않은 선택된 선 인덱스: $selectedLineIndex');
       return;
     }
-    
+
     final selectedLine = lines[selectedLineIndex];
     final currentLength = (selectedLine.end - selectedLine.start).distance;
-    
+
     print('선택된 선 길이 변경: $currentLength -> $newLength');
-    
+
     // 현재 방향 벡터 계산
     final direction = selectedLine.end - selectedLine.start;
     final normalizedDirection = direction / currentLength;
-    
+
     // 새로운 끝점 계산
     final newEnd = selectedLine.start + (normalizedDirection * newLength);
-    
+
     // 끝점 이동량 계산
     final endPointOffset = newEnd - selectedLine.end;
-    
+
     print('끝점 이동량: $endPointOffset');
-    
+
     saveState();
-    
+
     setState(() {
       // 선택된 선 업데이트
       lines[selectedLineIndex] = Line(
@@ -6490,21 +5142,23 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         isDiagonal: selectedLine.isDiagonal,
         connectedPoints: selectedLine.connectedPoints,
       );
-      
+
       // 연결된 선들 찾기 및 이동 (끝점 기준)
-      _moveConnectedLines(selectedLineIndex, selectedLine.end, newEnd, {selectedLineIndex});
-      
+      _moveConnectedLines(
+          selectedLineIndex, selectedLine.end, newEnd, {selectedLineIndex});
+
       // 시작점과 연결된 선들도 확인 (시작점이 이동한 경우)
       if (selectedLine.start != lines[selectedLineIndex].start) {
-        _moveConnectedLines(selectedLineIndex, selectedLine.start, lines[selectedLineIndex].start, {selectedLineIndex});
+        _moveConnectedLines(selectedLineIndex, selectedLine.start,
+            lines[selectedLineIndex].start, {selectedLineIndex});
       }
-      
+
       // 현재 점을 새로운 끝점으로 이동
       currentPoint = newEnd;
     });
-    
+
     _updateFirebase();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('선택된 선의 길이를 ${newLength.toInt()}픽셀로 변경했습니다!'),
@@ -6512,36 +5166,38 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         backgroundColor: const Color(0xFF238636),
       ),
     );
-    
+
     print('선택된 선 길이 변경 완료: ${selectedLine.start} -> $newEnd');
   }
-  
+
   // 연결된 선들을 함께 이동시키는 함수 (무한 루프 방지)
-  void _moveConnectedLines(int modifiedLineIndex, Offset oldPoint, Offset newPoint, Set<int> processedLines) {
+  void _moveConnectedLines(int modifiedLineIndex, Offset oldPoint,
+      Offset newPoint, Set<int> processedLines) {
     final offset = newPoint - oldPoint;
-    
+
     print('연결된 선들 이동 시작 - 기준 선: $modifiedLineIndex, 이동량: $offset');
-    
+
     // 이동량이 너무 작으면 처리하지 않음
     if (offset.distance < 0.1) {
       print('이동량이 너무 작음 - 처리 생략');
       return;
     }
-    
+
     // 수정된 선의 점과 연결된 선들 찾기
     for (int i = 0; i < lines.length; i++) {
-      if (i == modifiedLineIndex || processedLines.contains(i)) continue; // 수정된 선과 이미 처리된 선은 제외
-      
+      if (i == modifiedLineIndex || processedLines.contains(i))
+        continue; // 수정된 선과 이미 처리된 선은 제외
+
       final line = lines[i];
       bool needsUpdate = false;
       Offset? newStart;
       Offset? newEnd;
-      
+
       // 대각선이 아닌 연결된 선들 처리
       if (!line.isDiagonal) {
         // 연결 조건 확인 (거리 기반, 5픽셀 이내)
         const connectionThreshold = 5.0;
-        
+
         // 현재 선의 시작점이 수정된 점과 연결되어 있는지 확인
         if ((line.start - oldPoint).distance < connectionThreshold) {
           newStart = line.start + offset;
@@ -6557,38 +5213,43 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           print('연결된 선 발견 (끝점 연결): 인덱스 $i, 끝점만 이동');
         }
       }
-      
+
       // 대각선 연결 처리
       if (line.isDiagonal && line.connectedPoints != null) {
         final startInfo = line.connectedPoints!['start'] as List<int>;
         final endInfo = line.connectedPoints!['end'] as List<int>;
-        
+
         // 수정된 선과 연결된 대각선인지 확인
-        if (startInfo[0] == modifiedLineIndex || endInfo[0] == modifiedLineIndex) {
+        if (startInfo[0] == modifiedLineIndex ||
+            endInfo[0] == modifiedLineIndex) {
           // 대각선의 연결점 업데이트
           if (startInfo[0] == modifiedLineIndex) {
             // 시작점이 수정된 선과 연결됨
-            if (startInfo[1] == 0) { // 시작점과 연결
+            if (startInfo[1] == 0) {
+              // 시작점과 연결
               newStart = newPoint;
               newEnd = line.end;
               needsUpdate = true;
               print('대각선 연결 업데이트 (시작점-시작점): 인덱스 $i');
-            } else if (startInfo[1] == 1) { // 끝점과 연결
+            } else if (startInfo[1] == 1) {
+              // 끝점과 연결
               newStart = newPoint;
               newEnd = line.end;
               needsUpdate = true;
               print('대각선 연결 업데이트 (시작점-끝점): 인덱스 $i');
             }
           }
-          
+
           if (endInfo[0] == modifiedLineIndex) {
             // 끝점이 수정된 선과 연결됨
-            if (endInfo[1] == 0) { // 시작점과 연결
+            if (endInfo[1] == 0) {
+              // 시작점과 연결
               newStart = line.start;
               newEnd = newPoint;
               needsUpdate = true;
               print('대각선 연결 업데이트 (끝점-시작점): 인덱스 $i');
-            } else if (endInfo[1] == 1) { // 끝점과 연결
+            } else if (endInfo[1] == 1) {
+              // 끝점과 연결
               newStart = line.start;
               newEnd = newPoint;
               needsUpdate = true;
@@ -6597,12 +5258,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           }
         }
       }
-      
+
       // 선 업데이트
       if (needsUpdate && newStart != null && newEnd != null) {
         final oldLineStart = line.start;
         final oldLineEnd = line.end;
-        
+
         lines[i] = Line(
           start: newStart,
           end: newEnd,
@@ -6611,10 +5272,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           connectedPoints: line.connectedPoints,
         );
         print('선 $i 업데이트 완료: $newStart -> $newEnd');
-        
+
         // 처리된 선 목록에 추가
         processedLines.add(i);
-        
+
         // 재귀적으로 연결된 선들 처리 (시작점과 끝점 모두 확인)
         if (oldLineStart != newStart) {
           _moveConnectedLines(i, oldLineStart, newStart, processedLines);
@@ -6624,7 +5285,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       }
     }
-    
+
     print('연결된 선들 이동 완료');
   }
 
@@ -6634,18 +5295,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     final tolerance = (isMobile || isTablet) ? 50.0 : 30.0;
     double minDist = double.infinity;
     Offset? closestPoint;
-    
-    print('\n=== 끝점 찾기: 터치위치=$screenPosition, 선=${lines.length}개, tolerance=$tolerance ===');
-    
+
+    print(
+        '\n=== 끝점 찾기: 터치위치=$screenPosition, 선=${lines.length}개, tolerance=$tolerance ===');
+
     // 끝점 중복 확인을 위한 Set
     final Set<String> processedPoints = {};
-    
+
     // 기존 선의 끝점들 확인
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
-      
+
       // 시작점 확인
-      final startKey = '${line.start.dx.toStringAsFixed(2)},${line.start.dy.toStringAsFixed(2)}';
+      final startKey =
+          '${line.start.dx.toStringAsFixed(2)},${line.start.dy.toStringAsFixed(2)}';
       final startScreen = _modelToScreen(line.start);
       final dist1 = (screenPosition - startScreen).distance;
       if (!processedPoints.contains(startKey)) {
@@ -6658,9 +5321,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           }
         }
       }
-      
+
       // 끝점 확인
-      final endKey = '${line.end.dx.toStringAsFixed(2)},${line.end.dy.toStringAsFixed(2)}';
+      final endKey =
+          '${line.end.dx.toStringAsFixed(2)},${line.end.dy.toStringAsFixed(2)}';
       final endScreen = _modelToScreen(line.end);
       final dist2 = (screenPosition - endScreen).distance;
       if (!processedPoints.contains(endKey)) {
@@ -6674,51 +5338,50 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         }
       }
     }
-    
+
     // diagonalMode일 때만 직교점도 확인
     if (diagonalMode && pointDragStart != null) {
       // 직교점은 잠시 비활성화 (디버깅을 위해)
       // 직교점 로직이 일반 끝점 선택을 방해할 수 있음
     }
-    
+
     print('결과: ${closestPoint != null ? "점 찾음 (거리=$minDist)" : "점 없음"}\n');
-    
+
     return closestPoint;
   }
-  
+
   // 점에서 선으로의 직교점 찾기
   Offset? _findPerpendicularPoint(Offset point, Line line) {
     // 선의 방향 벡터
     final lineVec = line.end - line.start;
     final lineLength = lineVec.distance;
-    
+
     if (lineLength == 0) return null;
-    
+
     // 정규화된 방향 벡터
     final lineDir = lineVec / lineLength;
-    
+
     // 점에서 선의 시작점까지의 벡터
     final pointVec = point - line.start;
-    
+
     // 내적을 통해 투영 길이 계산
     final projLength = pointVec.dx * lineDir.dx + pointVec.dy * lineDir.dy;
-    
+
     // 투영 길이가 선의 범위 내에 있는지 확인
     if (projLength < 0 || projLength > lineLength) return null;
-    
+
     // 직교점 계산
     final perpPoint = line.start + lineDir * projLength;
-    
+
     // 원래 점과 직교점 사이의 거리가 합리적인지 확인
     final dist = (point - perpPoint).distance;
     if (dist > 500) return null; // 너무 먼 직교점은 무시
-    
+
     return perpPoint;
   }
 
   Map<String, dynamic>? _findEndpointNear(Offset position) {
     const tolerance = 20.0;
-    const quickReturnThreshold = 8.0; // 이 거리 이내면 바로 반환
     double closestDist = double.infinity;
     Map<String, dynamic>? closestInfo;
 
@@ -6734,8 +5397,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           'type': 'start',
           'point': line.start,
         };
-        // 충분히 가까우면 바로 반환
-        if (dist1 < quickReturnThreshold) return closestInfo;
       }
 
       final endScreen = _modelToScreen(line.end);
@@ -6747,8 +5408,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           'type': 'end',
           'point': line.end,
         };
-        // 충분히 가까우면 바로 반환
-        if (dist2 < quickReturnThreshold) return closestInfo;
       }
     }
 
@@ -6756,9 +5415,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   }
 
   int? _findLineNear(Offset position) {
-    const tolerance = 25.0; // 터치 감지 범위 확대 (그룹 드래그용)
-    double closestDist = double.infinity;
-    int? closestIndex;
+    const tolerance = 12.0;
 
     for (int i = 0; i < lines.length; i++) {
       final line = lines[i];
@@ -6766,20 +5423,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       final endScreen = _modelToScreen(line.end);
 
       final dist = _pointToLineDistance(position, startScreen, endScreen);
-      if (dist <= tolerance && dist < closestDist) {
-        closestDist = dist;
-        closestIndex = i;
+      if (dist <= tolerance) {
+        return i;
       }
     }
 
-    return closestIndex;
+    return null;
   }
 
   // 거리측정선 클릭 감지
   int? _findMeasurementNear(Offset position) {
     const tolerance = 20.0; // 더 넓은 감지 범위
 
-    print('거리측정선 클릭 감지 시도 - 측정선 개수: ${distanceMeasurements.length}, 클릭 위치: $position');
+    print(
+        '거리측정선 클릭 감지 시도 - 측정선 개수: ${distanceMeasurements.length}, 클릭 위치: $position');
 
     for (int i = 0; i < distanceMeasurements.length; i++) {
       final measurement = distanceMeasurements[i];
@@ -6800,9 +5457,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   }
 
   // 두 선분 사이의 최단거리 계산
-  DistanceMeasurement? _calculateLineToLineDistance(int lineIndex1, int lineIndex2) {
-    if (lineIndex1 < 0 || lineIndex1 >= lines.length ||
-        lineIndex2 < 0 || lineIndex2 >= lines.length) {
+  DistanceMeasurement? _calculateLineToLineDistance(
+      int lineIndex1, int lineIndex2) {
+    if (lineIndex1 < 0 ||
+        lineIndex1 >= lines.length ||
+        lineIndex2 < 0 ||
+        lineIndex2 >= lines.length) {
       return null;
     }
 
@@ -6818,16 +5478,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
     // 외적을 이용한 평행 판단 (정규화된 벡터로 계산)
     final crossProduct = (vec1.dx * vec2.dy - vec1.dy * vec2.dx).abs();
-    final normalizedCross = len1 > 0 && len2 > 0 ? crossProduct / (len1 * len2) : 0.0;
+    final normalizedCross =
+        len1 > 0 && len2 > 0 ? crossProduct / (len1 * len2) : 0.0;
     final isParallel = normalizedCross < 0.05; // 거의 평행 (약 3도 이내)
 
-    print('선분 $lineIndex1 - $lineIndex2: crossProduct=$crossProduct, normalized=$normalizedCross, isParallel=$isParallel');
+    print(
+        '선분 $lineIndex1 - $lineIndex2: crossProduct=$crossProduct, normalized=$normalizedCross, isParallel=$isParallel');
 
     if (isParallel) {
       print('평행한 선분 감지');
 
       // 두 선분을 무한 직선으로 확장했을 때의 수직 거리
-      final perpendicularDist = _pointToLineSegmentDistance(line1.start, line2.start, line2.end);
+      final perpendicularDist =
+          _pointToLineSegmentDistance(line1.start, line2.start, line2.end);
       print('수직 거리: $perpendicularDist');
 
       // 겹치는 구간 계산
@@ -6846,7 +5509,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         final point1 = overlapCenter;
 
         // line2에서 수직으로 가장 가까운 점
-        final point2 = _closestPointOnLineSegment(point1, line2.start, line2.end);
+        final point2 =
+            _closestPointOnLineSegment(point1, line2.start, line2.end);
 
         final actualDistance = (point1 - point2).distance;
         print('실제 거리 (point1-point2): $actualDistance');
@@ -6869,32 +5533,40 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     Offset? closestPoint2;
 
     // 1. line1의 각 점에서 line2까지의 거리
-    final dist1Start = _pointToLineSegmentDistance(line1.start, line2.start, line2.end);
+    final dist1Start =
+        _pointToLineSegmentDistance(line1.start, line2.start, line2.end);
     if (dist1Start < minDistance) {
       minDistance = dist1Start;
       closestPoint1 = line1.start;
-      closestPoint2 = _closestPointOnLineSegment(line1.start, line2.start, line2.end);
+      closestPoint2 =
+          _closestPointOnLineSegment(line1.start, line2.start, line2.end);
     }
 
-    final dist1End = _pointToLineSegmentDistance(line1.end, line2.start, line1.end);
+    final dist1End =
+        _pointToLineSegmentDistance(line1.end, line2.start, line1.end);
     if (dist1End < minDistance) {
       minDistance = dist1End;
       closestPoint1 = line1.end;
-      closestPoint2 = _closestPointOnLineSegment(line1.end, line2.start, line2.end);
+      closestPoint2 =
+          _closestPointOnLineSegment(line1.end, line2.start, line2.end);
     }
 
     // 2. line2의 각 점에서 line1까지의 거리
-    final dist2Start = _pointToLineSegmentDistance(line2.start, line1.start, line1.end);
+    final dist2Start =
+        _pointToLineSegmentDistance(line2.start, line1.start, line1.end);
     if (dist2Start < minDistance) {
       minDistance = dist2Start;
-      closestPoint1 = _closestPointOnLineSegment(line2.start, line1.start, line1.end);
+      closestPoint1 =
+          _closestPointOnLineSegment(line2.start, line1.start, line1.end);
       closestPoint2 = line2.start;
     }
 
-    final dist2End = _pointToLineSegmentDistance(line2.end, line1.start, line1.end);
+    final dist2End =
+        _pointToLineSegmentDistance(line2.end, line1.start, line1.end);
     if (dist2End < minDistance) {
       minDistance = dist2End;
-      closestPoint1 = _closestPointOnLineSegment(line2.end, line1.start, line1.end);
+      closestPoint1 =
+          _closestPointOnLineSegment(line2.end, line1.start, line1.end);
       closestPoint2 = line2.end;
     }
 
@@ -6938,7 +5610,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     final line2Max_t = line2Start_t > line2End_t ? line2Start_t : line2End_t;
 
     // 겹치는 구간 계산
-    final overlapStart_t = line1Start_t > line2Min_t ? line1Start_t : line2Min_t;
+    final overlapStart_t =
+        line1Start_t > line2Min_t ? line1Start_t : line2Min_t;
     final overlapEnd_t = line1End_t < line2Max_t ? line1End_t : line2Max_t;
 
     // 겹치는 구간이 없으면 null
@@ -6964,13 +5637,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   }
 
   // 점에서 선분까지의 최단거리
-  double _pointToLineSegmentDistance(Offset point, Offset lineStart, Offset lineEnd) {
+  double _pointToLineSegmentDistance(
+      Offset point, Offset lineStart, Offset lineEnd) {
     final closestPoint = _closestPointOnLineSegment(point, lineStart, lineEnd);
     return (point - closestPoint).distance;
   }
 
   // 선분 위의 점 중 주어진 점에서 가장 가까운 점 찾기
-  Offset _closestPointOnLineSegment(Offset point, Offset lineStart, Offset lineEnd) {
+  Offset _closestPointOnLineSegment(
+      Offset point, Offset lineStart, Offset lineEnd) {
     final lineVec = lineEnd - lineStart;
     final pointVec = point - lineStart;
 
@@ -6981,7 +5656,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     }
 
     // 투영 비율 계산 (0~1 사이로 클램프)
-    final t = ((pointVec.dx * lineVec.dx + pointVec.dy * lineVec.dy) / lineLengthSquared).clamp(0.0, 1.0);
+    final t = ((pointVec.dx * lineVec.dx + pointVec.dy * lineVec.dy) /
+            lineLengthSquared)
+        .clamp(0.0, 1.0);
 
     return Offset(
       lineStart.dx + t * lineVec.dx,
@@ -6990,13 +5667,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   }
 
   // 점과 선 사이의 거리 측정
-  DistanceMeasurement? _calculatePointToLineDistance(Offset point, int lineIndex) {
+  DistanceMeasurement? _calculatePointToLineDistance(
+      Offset point, int lineIndex) {
     if (lineIndex < 0 || lineIndex >= lines.length) {
       return null;
     }
 
     final line = lines[lineIndex];
-    final closestPoint = _closestPointOnLineSegment(point, line.start, line.end);
+    final closestPoint =
+        _closestPointOnLineSegment(point, line.start, line.end);
     final distance = (point - closestPoint).distance;
 
     return DistanceMeasurement(
@@ -7009,7 +5688,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   }
 
   // 점과 점 사이의 거리 측정
-  DistanceMeasurement? _calculatePointToPointDistance(Offset point1, Offset point2) {
+  DistanceMeasurement? _calculatePointToPointDistance(
+      Offset point1, Offset point2) {
     final distance = (point1 - point2).distance;
 
     return DistanceMeasurement(
@@ -7021,150 +5701,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     );
   }
 
-  // 원과 선 사이의 최단거리 측정
-  DistanceMeasurement? _calculateCircleToLineDistance(int circleIndex, int lineIndex) {
-    if (circleIndex < 0 || circleIndex >= circles.length) return null;
-    if (lineIndex < 0 || lineIndex >= lines.length) return null;
-
-    final circle = circles[circleIndex];
-    final line = lines[lineIndex];
-
-    // 원 중심에서 선분까지의 가장 가까운 점
-    final closestPointOnLine = _closestPointOnLineSegment(circle.center, line.start, line.end);
-
-    // 원 중심에서 선분 위 점까지의 방향 벡터
-    final direction = closestPointOnLine - circle.center;
-    final distanceFromCenter = direction.distance;
-
-    // 원 둘레에서 선분 방향으로 가장 가까운 점
-    Offset closestPointOnCircle;
-    if (distanceFromCenter < 0.001) {
-      // 선분이 원 중심을 지나가는 경우, 선분 방향으로 원 둘레 점 계산
-      final lineDir = (line.end - line.start);
-      final lineDirNorm = lineDir / lineDir.distance;
-      closestPointOnCircle = circle.center + lineDirNorm * circle.radius;
-    } else {
-      final normalizedDir = direction / distanceFromCenter;
-      closestPointOnCircle = circle.center + normalizedDir * circle.radius;
-    }
-
-    // 최단거리 (음수면 원 내부에 선이 있음)
-    final distance = (distanceFromCenter - circle.radius).abs();
-
-    // 선이 원 내부를 지나가는 경우
-    final actualDistance = distanceFromCenter < circle.radius ? 0.0 : distance;
-
-    return DistanceMeasurement(
-      lineIndex1: -1,
-      lineIndex2: lineIndex,
-      circleIndex1: circleIndex,
-      circleIndex2: null,
-      point1: closestPointOnCircle,
-      point2: closestPointOnLine,
-      distance: actualDistance,
-    );
-  }
-
-  // 원과 원 사이의 최단거리 측정
-  DistanceMeasurement? _calculateCircleToCircleDistance(int circleIndex1, int circleIndex2) {
-    if (circleIndex1 < 0 || circleIndex1 >= circles.length) return null;
-    if (circleIndex2 < 0 || circleIndex2 >= circles.length) return null;
-    if (circleIndex1 == circleIndex2) return null;
-
-    final circle1 = circles[circleIndex1];
-    final circle2 = circles[circleIndex2];
-
-    // 두 원 중심 사이의 방향 벡터
-    final direction = circle2.center - circle1.center;
-    final centerDistance = direction.distance;
-
-    if (centerDistance < 0.001) {
-      // 두 원의 중심이 같은 경우
-      return DistanceMeasurement(
-        lineIndex1: -1,
-        lineIndex2: -1,
-        circleIndex1: circleIndex1,
-        circleIndex2: circleIndex2,
-        point1: circle1.center,
-        point2: circle2.center,
-        distance: (circle1.radius - circle2.radius).abs(),
-      );
-    }
-
-    final normalizedDir = direction / centerDistance;
-
-    // 각 원 둘레에서 상대 원 방향으로 가장 가까운 점
-    final point1 = circle1.center + normalizedDir * circle1.radius;
-    final point2 = circle2.center - normalizedDir * circle2.radius;
-
-    // 최단거리 (두 원이 겹치면 0)
-    final distance = centerDistance - circle1.radius - circle2.radius;
-    final actualDistance = distance < 0 ? 0.0 : distance;
-
-    return DistanceMeasurement(
-      lineIndex1: -1,
-      lineIndex2: -1,
-      circleIndex1: circleIndex1,
-      circleIndex2: circleIndex2,
-      point1: point1,
-      point2: point2,
-      distance: actualDistance,
-    );
-  }
-
-  // 원과 점 사이의 최단거리 측정
-  DistanceMeasurement? _calculateCircleToPointDistance(int circleIndex, Offset point) {
-    if (circleIndex < 0 || circleIndex >= circles.length) return null;
-
-    final circle = circles[circleIndex];
-
-    // 원 중심에서 점까지의 방향 벡터
-    final direction = point - circle.center;
-    final distanceFromCenter = direction.distance;
-
-    // 원 둘레에서 점 방향으로 가장 가까운 점
-    Offset closestPointOnCircle;
-    if (distanceFromCenter < 0.001) {
-      // 점이 원 중심인 경우
-      closestPointOnCircle = Offset(circle.center.dx + circle.radius, circle.center.dy);
-    } else {
-      final normalizedDir = direction / distanceFromCenter;
-      closestPointOnCircle = circle.center + normalizedDir * circle.radius;
-    }
-
-    // 최단거리 (점이 원 내부에 있으면 음수지만 절대값 사용)
-    final distance = (distanceFromCenter - circle.radius).abs();
-    final actualDistance = distanceFromCenter < circle.radius ? 0.0 : distance;
-
-    return DistanceMeasurement(
-      lineIndex1: -1,
-      lineIndex2: -1,
-      circleIndex1: circleIndex,
-      circleIndex2: null,
-      point1: closestPointOnCircle,
-      point2: point,
-      distance: actualDistance,
-    );
-  }
-
   int? _findCircleNear(Offset position) {
-    const tolerance = 30.0; // 선택 영역 확대 (선과 겹칠 때 선택 용이)
+    const tolerance = 15.0;
 
     for (int i = 0; i < circles.length; i++) {
       final circle = circles[i];
       final centerScreen = _modelToScreen(circle.center);
       final radiusScreen = circle.radius * viewScale;
 
-      // 원 내부 또는 테두리 클릭 검사
+      // 원의 둘레와의 거리 계산
       final distToCenter = (position - centerScreen).distance;
-
-      // 원 내부 클릭 (중심점 포함)
-      if (distToCenter <= radiusScreen) {
-        return i;
-      }
-
-      // 원의 테두리 클릭 (허용 오차 포함)
       final distToCircle = (distToCenter - radiusScreen).abs();
+
       if (distToCircle <= tolerance) {
         return i;
       }
@@ -7176,15 +5724,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   double _pointToLineDistance(Offset p, Offset a, Offset b) {
     final lineLen = (b - a).distance;
     if (lineLen == 0) return (p - a).distance;
-    
-    final t = ((p - a).dx * (b - a).dx + (p - a).dy * (b - a).dy) / (lineLen * lineLen);
+
+    final t = ((p - a).dx * (b - a).dx + (p - a).dy * (b - a).dy) /
+        (lineLen * lineLen);
     final clampedT = t.clamp(0.0, 1.0);
-    
+
     final projection = Offset(
       a.dx + clampedT * (b.dx - a.dx),
       a.dy + clampedT * (b.dy - a.dy),
     );
-    
+
     return (p - projection).distance;
   }
 
@@ -7192,11 +5741,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     // 회전 변환 적용
     final cos = math.cos(viewRotation);
     final sin = math.sin(viewRotation);
-    
+
     // 회전된 좌표
     final rotatedX = model.dx * cos - model.dy * sin;
     final rotatedY = model.dx * sin + model.dy * cos;
-    
+
     return Offset(
       viewOffset.dx + rotatedX * viewScale,
       viewOffset.dy - rotatedY * viewScale,
@@ -7207,11 +5756,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     // 화면 좌표를 중심 기준으로 변환
     final translatedX = (screen.dx - viewOffset.dx) / viewScale;
     final translatedY = -(screen.dy - viewOffset.dy) / viewScale;
-    
+
     // 역회전 변환 적용
     final cos = math.cos(-viewRotation);
     final sin = math.sin(-viewRotation);
-    
+
     return Offset(
       translatedX * cos - translatedY * sin,
       translatedX * sin + translatedY * cos,
@@ -7223,22 +5772,26 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     if (circleMode && circleCenter != null) {
       final centerScreen = _modelToScreen(circleCenter!);
       return Offset(
-        centerScreen.dx + 20,  // 중심점 우측으로 이동
-        centerScreen.dy - 40,  // 상단으로 이동
+        centerScreen.dx + 20, // 중심점 우측으로 이동
+        centerScreen.dy - 40, // 상단으로 이동
       );
     }
-    
+
     // 원이 선택된 상태에서 방향키가 설정된 경우 (원 이동 모드)
-    if (selectedCircleIndex >= 0 && selectedCircleIndex < circles.length && arrowDirection != null) {
+    if (selectedCircleIndex >= 0 &&
+        selectedCircleIndex < circles.length &&
+        arrowDirection != null) {
       final circle = circles[selectedCircleIndex];
       final centerScreen = _modelToScreen(circle.center);
       return Offset(
-        centerScreen.dx + 30,  // 원 중심 우측으로 이동
-        centerScreen.dy - 40,  // 상단으로 이동
+        centerScreen.dx + 30, // 원 중심 우측으로 이동
+        centerScreen.dy - 40, // 상단으로 이동
       );
     }
-    
-    if (selectedLineIndex >= 0 && selectedLineIndex < lines.length && arrowDirection == null) {
+
+    if (selectedLineIndex >= 0 &&
+        selectedLineIndex < lines.length &&
+        arrowDirection == null) {
       final line = lines[selectedLineIndex];
       final startScreen = _modelToScreen(line.start);
       final endScreen = _modelToScreen(line.end);
@@ -7246,16 +5799,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       final midY = (startScreen.dy + endScreen.dy) / 2;
       return Offset(midX - 30, midY - 60);
     }
-    
+
     // 화살표가 표시되는 경우 화살표 우측 상단에 위치
     final currentScreen = _modelToScreen(currentPoint);
     if (arrowDirection != null) {
       return Offset(
-        currentScreen.dx + 30,  // 화살표 우측으로 이동
-        currentScreen.dy - 30,   // 상단으로 이동
+        currentScreen.dx + 30, // 화살표 우측으로 이동
+        currentScreen.dy - 30, // 상단으로 이동
       );
     }
-    
+
     // 기본 위치 (현재 점 우측 상단)
     return Offset(
       currentScreen.dx + 10,
@@ -7266,12 +5819,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   Offset _getNumberPadPopupPosition() {
     // 화면 크기 가져오기
     final screenSize = MediaQuery.of(context).size;
-    
+
     // 숫자키패드는 우하단에 위치 (margin 20px, 패드 크기 약 220px)
     // 숫자키패드 위쪽 중앙에 팝업 위치
-    final numberPadCenterX = screenSize.width - 20 - 110; // 우측에서 20px margin + 패드 절반 크기
-    final numberPadTopY = screenSize.height - 120 - 200; // 하단에서 120px margin + 패드 높이
-    
+    final numberPadCenterX =
+        screenSize.width - 20 - 110; // 우측에서 20px margin + 패드 절반 크기
+    final numberPadTopY =
+        screenSize.height - 120 - 200; // 하단에서 120px margin + 패드 높이
+
     return Offset(numberPadCenterX, numberPadTopY - 20); // 패드 위쪽 20px
   }
 
@@ -7288,27 +5843,28 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
     try {
       final dxfContent = generateDXF();
-      
+
       // 현재 날짜로 파일명 생성 (날짜_HV LINE 형식)
       final now = DateTime.now();
-      final fileName = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_HV LINE.dxf';
-      
+      final fileName =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_HV LINE.dxf';
+
       // Blob 생성 및 다운로드 (DXF 파일용 MIME 타입 사용)
       final bytes = Uint8List.fromList(dxfContent.codeUnits);
       final blob = html.Blob([bytes], 'application/dxf');
       final url = html.Url.createObjectUrlFromBlob(blob);
-      
+
       final anchor = html.AnchorElement()
         ..href = url
         ..download = fileName
         ..style.display = 'none';
-      
+
       html.document.body?.append(anchor);
       anchor.click();
       anchor.remove();
-      
+
       html.Url.revokeObjectUrl(url);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('DXF 파일이 다운로드되었습니다: $fileName'),
@@ -7328,18 +5884,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   String generateDXF() {
     final buffer = StringBuffer();
-    
+
     if (lines.isEmpty) {
       return '';
     }
-    
+
     // 첫 번째 선의 시작점을 원점으로 설정
     final firstLine = lines.first;
     final originX = firstLine.start.dx;
     final originY = firstLine.start.dy;
-    
+
     print('DXF 생성 - 첫 번째 선의 시작점을 원점으로 설정: ($originX, $originY)');
-    
+
     // 최소한의 DXF 헤더
     buffer.writeln('0');
     buffer.writeln('SECTION');
@@ -7348,10 +5904,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     buffer.writeln('9');
     buffer.writeln('\$ACADVER');
     buffer.writeln('1');
-    buffer.writeln('AC1009');  // AutoCAD R12 - 가장 호환성 높은 버전
+    buffer.writeln('AC1009'); // AutoCAD R12 - 가장 호환성 높은 버전
     buffer.writeln('0');
     buffer.writeln('ENDSEC');
-    
+
     // 최소한의 TABLES 섹션
     buffer.writeln('0');
     buffer.writeln('SECTION');
@@ -7411,31 +5967,31 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     buffer.writeln('ENDTAB');
     buffer.writeln('0');
     buffer.writeln('ENDSEC');
-    
+
     // ENTITIES 섹션
     buffer.writeln('0');
     buffer.writeln('SECTION');
     buffer.writeln('2');
     buffer.writeln('ENTITIES');
-    
+
     // 좌표 변환: 첫 번째 선의 시작점을 원점으로 이동 (실제 크기 유지)
     const double scale = 1.0; // 1:1 스케일 (HV Line에서 그린 것과 동일한 크기)
-    
+
     for (final line in lines) {
       // 첫 번째 선의 시작점을 원점으로 이동 후 스케일 적용
       final startX = (line.start.dx - originX) * scale;
       final startY = (line.start.dy - originY) * scale;
       final endX = (line.end.dx - originX) * scale;
       final endY = (line.end.dy - originY) * scale;
-      
+
       // 창문인지 일반 선인지에 따라 레이어 결정
       final layerName = line.openingType == 'window' ? 'WIN' : '0';
-      
+
       // 선 그리기
       buffer.writeln('0');
       buffer.writeln('LINE');
       buffer.writeln('8');
-      buffer.writeln(layerName);  // 창문은 WIN 레이어, 일반 선은 기본 레이어
+      buffer.writeln(layerName); // 창문은 WIN 레이어, 일반 선은 기본 레이어
       buffer.writeln('10');
       buffer.writeln(startX.toStringAsFixed(2));
       buffer.writeln('20');
@@ -7448,20 +6004,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       buffer.writeln(endY.toStringAsFixed(2));
       buffer.writeln('31');
       buffer.writeln('0.0');
-      
+
       // 창문인 경우 평행선 추가 제거 - 단일 선으로만 저장
     }
-    
+
     // 원들 출력
     for (final circle in circles) {
       final centerX = (circle.center.dx - originX) * scale;
       final centerY = (circle.center.dy - originY) * scale;
       final radius = circle.radius * scale;
-      
+
       buffer.writeln('0');
       buffer.writeln('CIRCLE');
       buffer.writeln('8');
-      buffer.writeln('0');  // 기본 레이어 사용
+      buffer.writeln('0'); // 기본 레이어 사용
       buffer.writeln('10');
       buffer.writeln(centerX.toStringAsFixed(2));
       buffer.writeln('20');
@@ -7471,16 +6027,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       buffer.writeln('40');
       buffer.writeln(radius.toStringAsFixed(2));
     }
-    
+
     buffer.writeln('0');
     buffer.writeln('ENDSEC');
     buffer.writeln('0');
     buffer.writeln('EOF');
-    
+
     return buffer.toString();
   }
-
-
 
   void toggleFullscreen() {
     try {
@@ -7489,7 +6043,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         print('사용자 요청: 전체화면 해제');
         _userRequestedFullscreen = false;
         _exitFullscreen();
-        
+
         // 전체화면 해제 피드백
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -7497,7 +6051,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               children: [
                 Icon(Icons.fullscreen_exit, color: Color(0xFF9CDCFE), size: 16),
                 SizedBox(width: 8),
-                Text('전체화면 모드가 해제되었습니다.', style: TextStyle(color: Color(0xFFE6EDF3), fontSize: 13)),
+                Text('전체화면 모드가 해제되었습니다.',
+                    style: TextStyle(color: Color(0xFFE6EDF3), fontSize: 13)),
               ],
             ),
             backgroundColor: const Color(0xFF161B22),
@@ -7514,7 +6069,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         print('사용자 요청: 전체화면 진입');
         _userRequestedFullscreen = true;
         _requestFullscreen();
-        
+
         // 전체화면 진입 피드백
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted && isFullscreen) {
@@ -7527,7 +6082,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     Expanded(
                       child: Text(
                         '전체화면 모드가 활성화되었습니다. ESC 키로 해제할 수 있습니다.',
-                        style: TextStyle(color: Color(0xFFE6EDF3), fontSize: 13),
+                        style:
+                            TextStyle(color: Color(0xFFE6EDF3), fontSize: 13),
                       ),
                     ),
                   ],
@@ -7546,18 +6102,20 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       }
     } catch (e) {
       print('전체화면 토글 오류: $e');
-      
+
       // 오류 피드백
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline, color: Color(0xFFCE9178), size: 16),
+              const Icon(Icons.error_outline,
+                  color: Color(0xFFCE9178), size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '전체화면 모드 전환에 실패했습니다: $e',
-                  style: const TextStyle(color: Color(0xFFE6EDF3), fontSize: 13),
+                  style:
+                      const TextStyle(color: Color(0xFFE6EDF3), fontSize: 13),
                 ),
               ),
             ],
@@ -7578,34 +6136,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     try {
       // 다양한 전체화면 API 시도 (아이패드 호환성)
       final element = html.document.documentElement!;
-      
+
       // 표준 Fullscreen API
-      if (element.requestFullscreen != null) {
-        element.requestFullscreen();
-        return;
-      }
-      
+      element.requestFullscreen();
+      return;
+
       // 웹킷 (Safari/아이패드)
       final webkitElement = element as dynamic;
       if (webkitElement.webkitRequestFullscreen != null) {
         webkitElement.webkitRequestFullscreen();
         return;
       }
-      
+
       // 모질라
       if (webkitElement.mozRequestFullScreen != null) {
         webkitElement.mozRequestFullScreen();
         return;
       }
-      
+
       // MS Edge
       if (webkitElement.msRequestFullscreen != null) {
         webkitElement.msRequestFullscreen();
         return;
       }
-      
+
       print('전체화면 API를 지원하지 않는 브라우저입니다.');
-      
+
       // 아이패드에서 전체화면이 지원되지 않는 경우 시뮬레이션
       if (isMobile) {
         setState(() {
@@ -7615,7 +6171,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       }
     } catch (e) {
       print('전체화면 요청 실패: $e');
-      
+
       // 폴백: 모바일에서는 시뮬레이션
       if (isMobile) {
         setState(() {
@@ -7629,30 +6185,28 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   void _exitFullscreen() {
     try {
       // 표준 Fullscreen API
-      if (html.document.exitFullscreen != null) {
-        html.document.exitFullscreen();
-        return;
-      }
-      
+      html.document.exitFullscreen();
+      return;
+
       // 웹킷 (Safari/아이패드)
       final doc = html.document as dynamic;
       if (doc.webkitExitFullscreen != null) {
         doc.webkitExitFullscreen();
         return;
       }
-      
+
       // 모질라
       if (doc.mozCancelFullScreen != null) {
         doc.mozCancelFullScreen();
         return;
       }
-      
+
       // MS Edge
       if (doc.msExitFullscreen != null) {
         doc.msExitFullscreen();
         return;
       }
-      
+
       // 시뮬레이션 모드 해제
       if (isMobile) {
         setState(() {
@@ -7661,7 +6215,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       }
     } catch (e) {
       print('전체화면 해제 실패: $e');
-      
+
       // 폴백
       if (isMobile) {
         setState(() {
@@ -7702,17 +6256,17 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     html.document.onFullscreenChange.listen((_) {
       _handleFullscreenChange();
     });
-    
+
     // 웹킷 fullscreenchange 이벤트 (Safari/아이패드)
     html.document.addEventListener('webkitfullscreenchange', (event) {
       _handleFullscreenChange();
     });
-    
+
     // 모질라 fullscreenchange 이벤트
     html.document.addEventListener('mozfullscreenchange', (event) {
       _handleFullscreenChange();
     });
-    
+
     // MS Edge fullscreenchange 이벤트
     html.document.addEventListener('msfullscreenchange', (event) {
       _handleFullscreenChange();
@@ -7721,18 +6275,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void _handleFullscreenChange() {
     final newFullscreenState = _isCurrentlyFullscreen();
-    
+
     // 브라우저에서 직접 전체화면 진입 시 자동 인식
     if (!_userRequestedFullscreen && newFullscreenState) {
       print('브라우저에서 전체화면 진입 감지 - 자동 동기화');
       _userRequestedFullscreen = true;
     }
-    
+
     // 사용자가 요청한 전체화면 모드에서 의도하지 않은 해제 방지
     if (_userRequestedFullscreen && !newFullscreenState && !_isRecovering) {
       print('전체화면 모드에서 의도하지 않은 해제 감지 - 복구 시도');
       _isRecovering = true;
-      
+
       // 약간의 지연 후 다시 전체화면 요청 (모든 플랫폼)
       Future.delayed(const Duration(milliseconds: 150), () {
         if (_userRequestedFullscreen && !_isCurrentlyFullscreen()) {
@@ -7748,14 +6302,17 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         _isRecovering = false;
       });
     }
-    
+
     // 사용자가 브라우저에서 직접 전체화면 해제 시 (ESC 키 등)
     // 복구 시도 중이 아닐 때만 사용자 의도로 판단
-    if (_userRequestedFullscreen && !newFullscreenState && isFullscreen && !_isRecovering) {
+    if (_userRequestedFullscreen &&
+        !newFullscreenState &&
+        isFullscreen &&
+        !_isRecovering) {
       print('사용자가 브라우저에서 전체화면 해제');
       _userRequestedFullscreen = false;
     }
-    
+
     setState(() {
       isFullscreen = newFullscreenState;
     });
@@ -7764,18 +6321,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
   bool _isCurrentlyFullscreen() {
     // 다양한 fullscreen API 체크
     final doc = html.document as dynamic;
-    
+
     return html.document.fullscreenElement != null ||
-           doc.webkitFullscreenElement != null ||
-           doc.mozFullScreenElement != null ||
-           doc.msFullscreenElement != null;
+        doc.webkitFullscreenElement != null ||
+        doc.mozFullScreenElement != null ||
+        doc.msFullscreenElement != null;
   }
 
   void toggleLineToWindow(int lineIndex) {
     if (lineIndex < 0 || lineIndex >= lines.length) return;
-    
+
     saveState();
-    
+
     setState(() {
       final line = lines[lineIndex];
       if (line.openingType == 'window') {
@@ -7785,13 +6342,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         // 일반 벽에서 창문으로 변경
         line.openingType = 'window';
       }
-      
+
       // 팝업 닫기
       showLinePopup = false;
       selectedLineForPopup = null;
       linePopupPosition = null;
     });
-    
+
     _updateFirebase();
   }
 
@@ -7805,32 +6362,34 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
   void centerCurrentPoint() {
     print('centerCurrentPoint 호출됨 - currentPoint: $currentPoint');
-    
+
     // 화면 크기 가져오기
     final context = this.context;
     final screenSize = MediaQuery.of(context).size;
-    
+
     // 캔버스 영역 계산 (UI 제외)
     final canvasWidth = screenSize.width;
     final canvasHeight = screenSize.height - 200; // 상단/하단 UI 고려
-    
+
     // 화면 중심 계산
     final screenCenterX = canvasWidth / 2;
     final screenCenterY = canvasHeight / 2;
-    
+
     // currentPoint가 화면 중심에 오도록 viewOffset 계산
     final newOffsetX = screenCenterX - (currentPoint.dx * viewScale);
-    final newOffsetY = screenCenterY + (currentPoint.dy * viewScale); // Y축 반전 고려
-    
+    final newOffsetY =
+        screenCenterY + (currentPoint.dy * viewScale); // Y축 반전 고려
+
     setState(() {
       viewOffset = Offset(newOffsetX, newOffsetY);
     });
-    
+
     print('현재 점을 화면 중심으로 이동 - 새로운 offset: ($newOffsetX, $newOffsetY)');
   }
 
   void fitViewToDrawing() {
-    print('fitViewToDrawing 시작 - 선: ${lines.length}개, 원: ${circles.length}개, 회전: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
+    print(
+        'fitViewToDrawing 시작 - 선: ${lines.length}개, 원: ${circles.length}개, 회전: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
 
     if (lines.isEmpty && circles.isEmpty) {
       // 선과 원이 모두 없으면 기본 뷰로 설정
@@ -7871,10 +6430,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
     // 원들의 경계 (원의 바운딩 박스 4개 모서리)
     for (final circle in circles) {
-      updateBoundsWithPoint(circle.center.dx - circle.radius, circle.center.dy - circle.radius);
-      updateBoundsWithPoint(circle.center.dx + circle.radius, circle.center.dy - circle.radius);
-      updateBoundsWithPoint(circle.center.dx - circle.radius, circle.center.dy + circle.radius);
-      updateBoundsWithPoint(circle.center.dx + circle.radius, circle.center.dy + circle.radius);
+      updateBoundsWithPoint(
+          circle.center.dx - circle.radius, circle.center.dy - circle.radius);
+      updateBoundsWithPoint(
+          circle.center.dx + circle.radius, circle.center.dy - circle.radius);
+      updateBoundsWithPoint(
+          circle.center.dx - circle.radius, circle.center.dy + circle.radius);
+      updateBoundsWithPoint(
+          circle.center.dx + circle.radius, circle.center.dy + circle.radius);
     }
 
     // 회전된 경계 박스 크기 계산
@@ -7919,21 +6482,28 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       viewOffset = Offset(newOffsetX, newOffsetY);
     });
 
-    print('Rotated drawing size: ${drawingWidth.toStringAsFixed(1)} x ${drawingHeight.toStringAsFixed(1)}');
-    print('Max dimension: ${maxDimension.toStringAsFixed(1)}, margin factor: ${marginFactor.toStringAsFixed(1)}');
-    print('New scale: ${optimalScale.toStringAsFixed(4)} (${(optimalScale * 100).toStringAsFixed(1)}%)');
-    print('New offset: (${newOffsetX.toStringAsFixed(1)}, ${newOffsetY.toStringAsFixed(1)})');
+    print(
+        'Rotated drawing size: ${drawingWidth.toStringAsFixed(1)} x ${drawingHeight.toStringAsFixed(1)}');
+    print(
+        'Max dimension: ${maxDimension.toStringAsFixed(1)}, margin factor: ${marginFactor.toStringAsFixed(1)}');
+    print(
+        'New scale: ${optimalScale.toStringAsFixed(4)} (${(optimalScale * 100).toStringAsFixed(1)}%)');
+    print(
+        'New offset: (${newOffsetX.toStringAsFixed(1)}, ${newOffsetY.toStringAsFixed(1)})');
   }
 
   @override
   Widget build(BuildContext context) {
     // 웹에서 추가 뷰 맞춤 체크 (빌드 완료 후)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_linesLoaded && _circlesLoaded && _currentPointLoaded && !_initialViewFitExecuted) {
+      if (_linesLoaded &&
+          _circlesLoaded &&
+          _currentPointLoaded &&
+          !_initialViewFitExecuted) {
         _checkInitialDataLoaded();
       }
     });
-    
+
     return Scaffold(
       body: RawKeyboardListener(
         focusNode: _focusNode,
@@ -7945,14 +6515,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               if (event.logicalKey == LogicalKeyboardKey.escape) {
                 cancelInlineInput();
                 return;
-              } else if (event.logicalKey == LogicalKeyboardKey.enter || 
-                         event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+              } else if (event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.numpadEnter) {
                 confirmInlineInput();
                 return;
               } else if (event.logicalKey == LogicalKeyboardKey.keyW) {
                 final currentText = inlineController.text;
                 setState(() {
-                  pendingOpeningType = pendingOpeningType == 'window' ? null : 'window';
+                  pendingOpeningType =
+                      pendingOpeningType == 'window' ? null : 'window';
                 });
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   inlineController.text = currentText;
@@ -7962,21 +6533,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                 });
                 return;
               } else if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
-                         event.logicalKey == LogicalKeyboardKey.arrowDown ||
-                         event.logicalKey == LogicalKeyboardKey.arrowLeft ||
-                         event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                  event.logicalKey == LogicalKeyboardKey.arrowDown ||
+                  event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+                  event.logicalKey == LogicalKeyboardKey.arrowRight) {
                 if (selectedLineIndex < 0 || arrowDirection != null) {
                   String newDirection = '';
-                  if (event.logicalKey == LogicalKeyboardKey.arrowUp) newDirection = 'Up';
-                  else if (event.logicalKey == LogicalKeyboardKey.arrowDown) newDirection = 'Down';
-                  else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) newDirection = 'Left';
-                  else if (event.logicalKey == LogicalKeyboardKey.arrowRight) newDirection = 'Right';
-                  
+                  if (event.logicalKey == LogicalKeyboardKey.arrowUp)
+                    newDirection = 'Up';
+                  else if (event.logicalKey == LogicalKeyboardKey.arrowDown)
+                    newDirection = 'Down';
+                  else if (event.logicalKey == LogicalKeyboardKey.arrowLeft)
+                    newDirection = 'Left';
+                  else if (event.logicalKey == LogicalKeyboardKey.arrowRight)
+                    newDirection = 'Right';
+
                   setState(() {
                     inlineDirection = newDirection;
                     arrowDirection = newDirection;
                   });
-                  
+
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     inlineFocus.requestFocus();
                     inlineController.selection = TextSelection.fromPosition(
@@ -7988,33 +6563,32 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               }
               return;
             }
-            
-            if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyZ) {
+
+            if (event.isControlPressed &&
+                event.logicalKey == LogicalKeyboardKey.keyZ) {
               undo();
-                        } else if (event.logicalKey == LogicalKeyboardKey.delete || 
-                       event.logicalKey == LogicalKeyboardKey.backspace) {
+            } else if (event.logicalKey == LogicalKeyboardKey.delete ||
+                event.logicalKey == LogicalKeyboardKey.backspace) {
               if (showInlineInput && inlineController.text.isNotEmpty) {
                 // 숫자 입력 중이면 백스페이스 기능 (마지막 문자 삭제)
                 setState(() {
                   final currentText = inlineController.text;
                   if (currentText.isNotEmpty) {
-                    inlineController.text = currentText.substring(0, currentText.length - 1);
+                    inlineController.text =
+                        currentText.substring(0, currentText.length - 1);
                     inlineController.selection = TextSelection.fromPosition(
                       TextPosition(offset: inlineController.text.length),
                     );
-
-                    // 모든 숫자를 지우면 입력창도 숨김
-                    if (inlineController.text.isEmpty) {
-                      showInlineInput = false;
-                    }
                   }
                 });
               } else {
                 // 숫자 입력 중이 아니면 선/원/거리측정 삭제
-                print('Delete 키 처리 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex, selectedMeasurementIndex: $selectedMeasurementIndex');
+                print(
+                    'Delete 키 처리 - selectedLineIndex: $selectedLineIndex, selectedCircleIndex: $selectedCircleIndex, selectedMeasurementIndex: $selectedMeasurementIndex');
                 if (selectedMeasurementIndex != null) {
                   // 선택된 거리측정이 있으면 삭제
-                  print('Delete 키: 선택된 거리측정 삭제 (인덱스: $selectedMeasurementIndex)');
+                  print(
+                      'Delete 키: 선택된 거리측정 삭제 (인덱스: $selectedMeasurementIndex)');
                   setState(() {
                     distanceMeasurements.removeAt(selectedMeasurementIndex!);
                     selectedMeasurementIndex = null;
@@ -8023,28 +6597,37 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   // 선택된 원이 있으면 해당 원 삭제
                   print('Delete 키: 선택된 원 삭제 (인덱스: $selectedCircleIndex)');
                   deleteSelectedCircle();
-                } else if (selectedLineIndex >= 0 && selectedLineIndex < lines.length) {
+                } else if (selectedLineIndex >= 0 &&
+                    selectedLineIndex < lines.length) {
                   // 선택된 선이 있으면 해당 선 삭제
                   print('Delete 키: 선택된 선 삭제 (인덱스: $selectedLineIndex)');
                   deleteSelectedLine();
                 } else {
                   // 선택된 것이 없으면 가장 최근에 추가된 것 삭제
-                  int? lastLineTimestamp = lines.isNotEmpty ? lines.last.timestamp : null;
-                  int? lastCircleTimestamp = circles.isNotEmpty ? circles.last.timestamp : null;
-                  int? lastMeasurementTimestamp = distanceMeasurements.isNotEmpty ? distanceMeasurements.last.timestamp : null;
+                  int? lastLineTimestamp =
+                      lines.isNotEmpty ? lines.last.timestamp : null;
+                  int? lastCircleTimestamp =
+                      circles.isNotEmpty ? circles.last.timestamp : null;
+                  int? lastMeasurementTimestamp =
+                      distanceMeasurements.isNotEmpty
+                          ? distanceMeasurements.last.timestamp
+                          : null;
 
                   int maxTimestamp = -1;
                   String? deleteType;
 
-                  if (lastLineTimestamp != null && lastLineTimestamp > maxTimestamp) {
+                  if (lastLineTimestamp != null &&
+                      lastLineTimestamp > maxTimestamp) {
                     maxTimestamp = lastLineTimestamp;
                     deleteType = 'line';
                   }
-                  if (lastCircleTimestamp != null && lastCircleTimestamp > maxTimestamp) {
+                  if (lastCircleTimestamp != null &&
+                      lastCircleTimestamp > maxTimestamp) {
                     maxTimestamp = lastCircleTimestamp;
                     deleteType = 'circle';
                   }
-                  if (lastMeasurementTimestamp != null && lastMeasurementTimestamp > maxTimestamp) {
+                  if (lastMeasurementTimestamp != null &&
+                      lastMeasurementTimestamp > maxTimestamp) {
                     maxTimestamp = lastMeasurementTimestamp;
                     deleteType = 'measurement';
                   }
@@ -8074,7 +6657,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               onDirectionKey('Right');
             } else if (event.logicalKey == LogicalKeyboardKey.keyW) {
               setState(() {
-                pendingOpeningType = pendingOpeningType == 'window' ? null : 'window';
+                pendingOpeningType =
+                    pendingOpeningType == 'window' ? null : 'window';
               });
             } else if (event.logicalKey == LogicalKeyboardKey.escape) {
               if (showInlineInput) {
@@ -8104,42 +6688,42 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   hoveredLineIndex = null;
                 });
               }
-            } else if (event.logicalKey == LogicalKeyboardKey.equal && 
-                       (event.isControlPressed || event.isMetaPressed)) {
+            } else if (event.logicalKey == LogicalKeyboardKey.equal &&
+                (event.isControlPressed || event.isMetaPressed)) {
               setState(() {
                 viewScale = (viewScale * 1.2).clamp(0.02, 2.0);
               });
-            } else if (event.logicalKey == LogicalKeyboardKey.minus && 
-                       (event.isControlPressed || event.isMetaPressed)) {
+            } else if (event.logicalKey == LogicalKeyboardKey.minus &&
+                (event.isControlPressed || event.isMetaPressed)) {
               setState(() {
                 viewScale = (viewScale * 0.8).clamp(0.02, 2.0);
               });
-            } else if (event.logicalKey == LogicalKeyboardKey.digit0 && 
-                       (event.isControlPressed || event.isMetaPressed)) {
+            } else if (event.logicalKey == LogicalKeyboardKey.digit0 &&
+                (event.isControlPressed || event.isMetaPressed)) {
               fitViewToDrawing();
             } else if (event.logicalKey == LogicalKeyboardKey.tab) {
               if (lines.isEmpty) return;
-              
+
               if (showInlineInput) {
                 cancelInlineInput();
               }
-              
+
               setState(() {
                 selectedLineIndex = (selectedLineIndex + 1) % lines.length;
               });
-            } else if (event.character != null && 
-                      int.tryParse(event.character!) != null &&
-                      !showInlineInput) {
+            } else if (event.character != null &&
+                int.tryParse(event.character!) != null &&
+                !showInlineInput) {
               print('Number pressed: ${event.character}');
-              
+
               // 방향키가 설정되어 있으면 새 선 그리기 모드
               if (arrowDirection != null || inlineDirection.isNotEmpty) {
                 print('방향키 설정됨 - 새 선 그리기 모드');
                 setState(() {
-                  showInlineInput = true; // 숫자 입력 시 입력창 표시
+                  showInlineInput = true;
                   inlineController.text = event.character!;
                 });
-                
+
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   inlineFocus.requestFocus();
                   inlineController.selection = TextSelection.fromPosition(
@@ -8156,7 +6740,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   final line = lines[selectedLineIndex];
                   final dx = line.end.dx - line.start.dx;
                   final dy = line.end.dy - line.start.dy;
-                  
+
                   if (dx.abs() > dy.abs()) {
                     inlineDirection = dx > 0 ? 'Right' : 'Left';
                   } else {
@@ -8164,7 +6748,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   }
                   arrowDirection = null;
                 });
-                
+
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   inlineFocus.requestFocus();
                   inlineController.selection = TextSelection.fromPosition(
@@ -8182,7 +6766,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   final line = lines[selectedLineIndex];
                   final dx = line.end.dx - line.start.dx;
                   final dy = line.end.dy - line.start.dy;
-                  
+
                   if (dx.abs() > dy.abs()) {
                     inlineDirection = dx > 0 ? 'Right' : 'Left';
                   } else {
@@ -8190,7 +6774,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   }
                   arrowDirection = null;
                 });
-                
+
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   inlineFocus.requestFocus();
                   inlineController.selection = TextSelection.fromPosition(
@@ -8201,13 +6785,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             }
           }
         },
-        child: Stack(
+        child: Column(
           children: [
-            // 메인 레이아웃 (Column)
-            Column(
-              children: [
-                // 상단 메뉴바 - Cursor 스타일
-                Container(
+            // 상단 메뉴바 - Cursor 스타일
+            Container(
               margin: const EdgeInsets.all(8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -8230,7 +6811,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   // 로고/타이틀 (모바일에서는 완전히 숨김)
                   if (!isMobile) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF569CD6).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
@@ -8260,41 +6842,45 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     ),
                     const SizedBox(width: 8),
                   ],
-                  
+
                   // 레이아웃 전환 버튼
                   _buildLayoutSwitchButton(),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // 페이지 선택 드롭다운
                   _buildPageDropdown(),
-                  
+
                   const Spacer(),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // 모드 버튼들
                   _buildCursorButtonWithWidget(
                     iconWidget: WindowIcon(
-                      color: pendingOpeningType == 'window' ? Colors.white : const Color(0xFF569CD6),
+                      color: pendingOpeningType == 'window'
+                          ? Colors.white
+                          : const Color(0xFF569CD6),
                       size: 14,
                     ),
                     label: '창문',
                     onPressed: () {
                       setState(() {
-                        pendingOpeningType = pendingOpeningType == 'window' ? null : 'window';
+                        pendingOpeningType =
+                            pendingOpeningType == 'window' ? null : 'window';
                       });
                     },
                     color: const Color(0xFF569CD6), // Cursor 파란색
                     isPrimary: pendingOpeningType == 'window',
                   ),
-                  
+
                   const SizedBox(width: 4),
-                  
+
                   // 대각선(점과 점 연결) 버튼
                   _buildCursorButtonWithWidget(
                     iconWidget: DiagonalDotsIcon(
-                      color: diagonalMode ? Colors.white : const Color(0xFFDCDCAA),
+                      color:
+                          diagonalMode ? Colors.white : const Color(0xFFDCDCAA),
                       size: 14,
                     ),
                     label: '점연결',
@@ -8316,29 +6902,29 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     color: const Color(0xFFDCDCAA), // 연한 노란색
                     isPrimary: diagonalMode,
                   ),
-                  
+
                   const SizedBox(width: 4),
-                  
+
                   _buildCursorButton(
                     icon: Icons.circle_outlined,
                     label: '원',
                     onPressed: () {
-                            setState(() {
-        circleMode = !circleMode;
-        circleCenter = null;
-        isPointDragging = false;
-        pointDragStart = null;
-        pointDragEnd = null;
-        hoveredPoint = null;
-        hoveredLineIndex = null;
-      });
+                      setState(() {
+                        circleMode = !circleMode;
+                        circleCenter = null;
+                        isPointDragging = false;
+                        pointDragStart = null;
+                        pointDragEnd = null;
+                        hoveredPoint = null;
+                        hoveredLineIndex = null;
+                      });
                     },
                     color: const Color(0xFF66BB6A), // 녹색
                     isPrimary: circleMode,
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // 메인 액션 버튼들
 
                   _buildCursorButton(
@@ -8349,11 +6935,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                         distanceMeasureMode = !distanceMeasureMode;
                         firstSelectedLineForDistance = null;
                         firstSelectedPointForDistance = null;
-                        firstSelectedCircleForDistance = null;
                         if (!distanceMeasureMode) {
                           // 모드 해제 시 선택 초기화
                           selectedLineIndex = -1;
-                          selectedCircleIndex = -1;
                           selectedEndpoint = null;
                         }
                       });
@@ -8361,14 +6945,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     color: const Color(0xFFFF7043),
                     isPrimary: distanceMeasureMode,
                   ),
-                  
+
                   const SizedBox(width: 6),
-                  
-                  _buildCursorButtonWithWidget(
-                    iconWidget: UndoIcon(
-                      color: const Color(0xFFCE9178),
-                      size: 14,
-                    ),
+
+                  _buildCursorButton(
+                    icon: Icons.undo_rounded,
                     label: '되돌리기',
                     onPressed: undo,
                     color: const Color(0xFFCE9178), // Cursor 주황색
@@ -8377,11 +6958,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   const SizedBox(width: 6),
 
                   // 초기화 버튼
-                  _buildCursorButtonWithWidget(
-                    iconWidget: RefreshIcon(
-                      color: const Color(0xFF9CDCFE),
-                      size: 14,
-                    ),
+                  _buildCursorButton(
+                    icon: Icons.refresh_rounded,
                     label: '초기화',
                     onPressed: reset,
                     color: const Color(0xFF9CDCFE), // Cursor 연한 파란색
@@ -8395,11 +6973,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                   const SizedBox(width: 8),
 
                   // DXF 저장 버튼
-                  _buildCursorButtonWithWidget(
-                    iconWidget: DxfSaveIcon(
-                      color: Colors.white,
-                      size: 14,
-                    ),
+                  _buildCursorButton(
+                    icon: Icons.save_alt_rounded,
                     label: 'DXF 저장',
                     onPressed: saveToDXF,
                     color: const Color(0xFF6A9955), // Cursor 초록색
@@ -8411,73 +6986,40 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
 
             // 캔버스 (전체 화면)
             Expanded(
-              child: SelectionContainer.disabled( // 텍스트 선택 비활성화
-                child: Stack(
-                  children: [
-                    Listener(
+              child: Stack(
+                children: [
+                  Listener(
                     onPointerSignal: (pointerSignal) {
                       if (pointerSignal is PointerScrollEvent) {
                         setState(() {
                           final delta = pointerSignal.scrollDelta.dy;
                           final scaleFactor = delta > 0 ? 0.9 : 1.1;
-                          
+
                           final pointerPos = pointerSignal.localPosition;
-                                    final beforeScale = viewScale;
-          viewScale = (viewScale * scaleFactor).clamp(0.02, 2.0);
-          
-          final scaleChange = viewScale / beforeScale;
+                          final beforeScale = viewScale;
+                          viewScale =
+                              (viewScale * scaleFactor).clamp(0.02, 2.0);
+
+                          final scaleChange = viewScale / beforeScale;
                           viewOffset = Offset(
-                            pointerPos.dx - (pointerPos.dx - viewOffset.dx) * scaleChange,
-                            pointerPos.dy - (pointerPos.dy - viewOffset.dy) * scaleChange,
+                            pointerPos.dx -
+                                (pointerPos.dx - viewOffset.dx) * scaleChange,
+                            pointerPos.dy -
+                                (pointerPos.dy - viewOffset.dy) * scaleChange,
                           );
                         });
                       }
                     },
                     child: GestureDetector(
-                      behavior: HitTestBehavior.opaque, // 터치 이벤트를 항상 받도록 설정
-                      // 길게 누르기 시 메모 추가
-                      onLongPressStart: (details) {
-                        // 기존 메모를 탭했는지 확인
-                        final memoIndex = _getMemoAtPosition(details.localPosition);
-                        if (memoIndex != null) {
-                          // 기존 메모 편집
-                          _showEditMemoDialog(memoIndex);
-                        } else {
-                          // 새 메모 추가
-                          final modelPos = _screenToModelForMemo(details.localPosition);
-                          _showAddMemoDialog(modelPos);
-                        }
-                      },
-                      // 더블탭은 _handleTap에서 수동으로 감지 (위치 체크 포함)
                       // 모든 드래그/스케일 제스처를 scale로 통합 처리
                       onScaleStart: (details) {
-                        print('Scale start - 터치 포인트 수: ${details.pointerCount}');
-                        
+                        print(
+                            'Scale start - 터치 포인트 수: ${details.pointerCount}');
+
                         // 한 손가락 제스처인 경우
                         if (details.pointerCount == 1) {
-                          // 원이 선택된 상태에서 드래그 시작
-                          if (selectedCircleIndex >= 0) {
-                            final circle = circles[selectedCircleIndex];
-                            final centerScreen = _modelToScreen(circle.center);
-                            final radiusScreen = circle.radius * viewScale;
-                            final clickScreen = details.localFocalPoint;
-                            final distanceScreen = (clickScreen - centerScreen).distance;
-
-                            // 원 내부 또는 테두리 클릭 시 드래그 시작 (화면 좌표 기준 30픽셀 허용 오차)
-                            const toleranceScreen = 30.0;
-                            if (distanceScreen <= radiusScreen + toleranceScreen) {
-                              // 되돌리기를 위해 현재 상태 저장
-                              saveState();
-                              final clickPos = _screenToModel(details.localFocalPoint);
-                              setState(() {
-                                isCircleDragging = true;
-                                circleDragOffset = circle.center - clickPos;
-                              });
-                              return;
-                            }
-                          }
                           // 그룹 선택 시 드래그 처리
-                          else if (selectedGroupLines.isNotEmpty) {
+                          if (selectedGroupLines.isNotEmpty) {
                             _handlePointDragStart(DragStartDetails(
                               localPosition: details.localFocalPoint,
                               globalPosition: details.focalPoint,
@@ -8486,9 +7028,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           }
                           // 대각선 모드 드래그 처리
                           else if (diagonalMode && !circleMode) {
-                            print('대각선 모드 - onScaleStart에서 _handlePointDragStart 호출');
+                            print(
+                                '대각선 모드 - onScaleStart에서 _handlePointDragStart 호출');
                             print('details.focalPoint: ${details.focalPoint}');
-                            print('details.localFocalPoint: ${details.localFocalPoint}');
+                            print(
+                                'details.localFocalPoint: ${details.localFocalPoint}');
                             _handlePointDragStart(DragStartDetails(
                               localPosition: details.localFocalPoint,
                               globalPosition: details.focalPoint,
@@ -8504,13 +7048,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                             return;
                           }
                         }
-                        
+
                         // 기본 스케일 처리
                         setState(() {
                           _isScaling = true;
                           _isPanning = false;
                           _touchCount = details.pointerCount;
-                          _isRotating = false; // 회전 상태 초기화
 
                           // 아이패드 웹에서 한 손가락 제스처인 경우
                           if (details.pointerCount == 1 && isTablet) {
@@ -8528,206 +7071,23 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                         if (details.pointerCount >= 2) {
                           _rotationCenterScreen = details.localFocalPoint;
                           // 두 손가락 중심점의 모델 좌표 계산
-                          _rotationCenterModel = _screenToModel(_rotationCenterScreen!);
+                          _rotationCenterModel =
+                              _screenToModel(_rotationCenterScreen!);
                         } else {
                           // 한 손가락인 경우 화면의 중심을 기준
-                          final renderBox = context.findRenderObject() as RenderBox;
+                          final renderBox =
+                              context.findRenderObject() as RenderBox;
                           final screenSize = renderBox.size;
-                          _rotationCenterScreen = Offset(screenSize.width / 2, screenSize.height / 2);
-                          _rotationCenterModel = _screenToModel(_rotationCenterScreen!);
+                          _rotationCenterScreen = Offset(
+                              screenSize.width / 2, screenSize.height / 2);
+                          _rotationCenterModel =
+                              _screenToModel(_rotationCenterScreen!);
                         }
 
-                        print('아이패드 제스처 시작 - 초기 스케일: ${_initialScale.toStringAsFixed(2)}, 초기 회전: ${(_initialRotation * 180 / math.pi).toStringAsFixed(1)}°, 회전 중심(모델): $_rotationCenterModel, 회전 중심(화면): $_rotationCenterScreen, 터치 수: ${details.pointerCount}');
+                        print(
+                            '아이패드 제스처 시작 - 초기 스케일: ${_initialScale.toStringAsFixed(2)}, 초기 회전: ${(_initialRotation * 180 / math.pi).toStringAsFixed(1)}°, 회전 중심(모델): $_rotationCenterModel, 회전 중심(화면): $_rotationCenterScreen, 터치 수: ${details.pointerCount}');
                       },
                       onScaleUpdate: (details) {
-                        // 원 드래그 중인 경우 처리
-                        if (isCircleDragging && selectedCircleIndex >= 0) {
-                          final currentPos = _screenToModel(details.localFocalPoint);
-                          final newCenter = currentPos + (circleDragOffset ?? Offset.zero);
-                          final circleRadius = circles[selectedCircleIndex].radius;
-
-                          // 스냅 기능
-                          Offset snappedCenter = newCenter;
-                          const snapDistance = 40.0; // 스냅 거리 증가 (20 -> 40)
-                          bool pointSnapped = false;
-                          bool lineSnapped = false;
-                          bool cornerSnapped = false;
-
-                          // 1. 코너 스냅 (두 선이 수직으로 만나는 곳) - 최우선 순위
-                          // 모든 선의 조합을 검사하여 수직으로 만나는 코너 찾기
-                          for (int i = 0; i < lines.length && !cornerSnapped; i++) {
-                            for (int j = i + 1; j < lines.length && !cornerSnapped; j++) {
-                              final line1 = lines[i];
-                              final line2 = lines[j];
-
-                              // 두 선이 한 점에서 만나는지 확인
-                              Offset? cornerPoint;
-                              Offset? line1Dir;
-                              Offset? line2Dir;
-
-                              // 케이스 1: line1.end == line2.start
-                              if ((line1.end - line2.start).distance < 1.0) {
-                                cornerPoint = line1.end;
-                                line1Dir = (line1.end - line1.start);
-                                line2Dir = (line2.end - line2.start);
-                              }
-                              // 케이스 2: line1.end == line2.end
-                              else if ((line1.end - line2.end).distance < 1.0) {
-                                cornerPoint = line1.end;
-                                line1Dir = (line1.end - line1.start);
-                                line2Dir = (line2.start - line2.end);
-                              }
-                              // 케이스 3: line1.start == line2.start
-                              else if ((line1.start - line2.start).distance < 1.0) {
-                                cornerPoint = line1.start;
-                                line1Dir = (line1.end - line1.start);
-                                line2Dir = (line2.end - line2.start);
-                              }
-                              // 케이스 4: line1.start == line2.end
-                              else if ((line1.start - line2.end).distance < 1.0) {
-                                cornerPoint = line1.start;
-                                line1Dir = (line1.end - line1.start);
-                                line2Dir = (line2.start - line2.end);
-                              }
-
-                              if (cornerPoint != null && line1Dir != null && line2Dir != null) {
-                                // 두 선이 수직인지 확인 (내적이 0에 가까운지)
-                                final dot = line1Dir.dx * line2Dir.dx + line1Dir.dy * line2Dir.dy;
-                                final angle = dot / (line1Dir.distance * line2Dir.distance);
-
-                                if (angle.abs() < 0.2) { // 거의 수직 (약 78-102도)
-                                  // 각 선의 단위 방향 벡터 (코너에서 바깥쪽을 향하도록)
-                                  final dir1Normalized = line1Dir / line1Dir.distance;
-                                  final dir2Normalized = line2Dir / line2Dir.distance;
-
-                                  // 4개의 가능한 코너 위치를 모두 계산
-                                  // 두 선이 이루는 4개의 사분면 각각에 원이 위치할 수 있음
-                                  final List<Offset> possibleCenters = [];
-
-                                  // 이등분선 벡터 (두 방향 벡터의 합)
-                                  Offset bisector1 = dir1Normalized + dir2Normalized;
-                                  if (bisector1.distance > 0.01) {
-                                    bisector1 = bisector1 / bisector1.distance;
-                                    // 수직인 경우 반지름 * √2, 그렇지 않으면 적절히 조정
-                                    final distance = circleRadius * 1.414;
-                                    possibleCenters.add(cornerPoint + bisector1 * distance);
-                                    possibleCenters.add(cornerPoint - bisector1 * distance);
-                                  }
-
-                                  // 다른 이등분선 벡터 (두 방향 벡터의 차)
-                                  Offset bisector2 = Offset(
-                                    dir1Normalized.dx - dir2Normalized.dx,
-                                    dir1Normalized.dy - dir2Normalized.dy
-                                  );
-                                  if (bisector2.distance > 0.01) {
-                                    bisector2 = bisector2 / bisector2.distance;
-                                    final distance = circleRadius * 1.414;
-                                    possibleCenters.add(cornerPoint + bisector2 * distance);
-                                    possibleCenters.add(cornerPoint - bisector2 * distance);
-                                  }
-
-                                  // 가장 가까운 위치 찾기
-                                  double minDistance = double.infinity;
-                                  Offset? bestCenter;
-
-                                  for (final center in possibleCenters) {
-                                    final distance = (newCenter - center).distance;
-                                    if (distance < minDistance && distance < snapDistance * 4) {
-                                      minDistance = distance;
-                                      bestCenter = center;
-                                    }
-                                  }
-
-                                  if (bestCenter != null) {
-                                    snappedCenter = bestCenter;
-                                    cornerSnapped = true;
-                                    break;
-                                  }
-                                }
-                              }
-                            }
-                          }
-
-                          // 2. 코너 스냅이 안됐으면 점에 스냅 (원의 중심이 점에 스냅)
-                          if (!cornerSnapped) {
-                            for (final line in lines) {
-                              if ((line.start - newCenter).distance < snapDistance) {
-                                snappedCenter = line.start;
-                                pointSnapped = true;
-                                break;
-                              }
-                              if ((line.end - newCenter).distance < snapDistance) {
-                                snappedCenter = line.end;
-                                pointSnapped = true;
-                                break;
-                              }
-                            }
-                          }
-
-                          // 3. 코너와 점에 스냅되지 않았다면, 원의 테두리가 선에 접하도록 스냅
-                          if (!cornerSnapped && !pointSnapped) {
-                            for (final line in lines) {
-                              final lineVector = line.end - line.start;
-                              final lineLength = lineVector.distance;
-                              if (lineLength == 0) continue;
-
-                              final lineDir = lineVector / lineLength;
-                              final toCircle = newCenter - line.start;
-                              final projection = (toCircle.dx * lineDir.dx + toCircle.dy * lineDir.dy);
-
-                              // 선 위의 가장 가까운 점 찾기
-                              if (projection >= 0 && projection <= lineLength) {
-                                final closestPoint = line.start + lineDir * projection;
-                                final distance = (closestPoint - newCenter).distance;
-
-                                // 원의 테두리가 선에 접하도록 스냅 (원의 반지름 고려)
-                                if ((distance - circleRadius).abs() < snapDistance) {
-                                  // 원의 중심을 선으로부터 반지름만큼 떨어진 위치로 이동
-                                  final direction = (newCenter - closestPoint).distance > 0
-                                      ? (newCenter - closestPoint) / (newCenter - closestPoint).distance
-                                      : Offset(1, 0);
-                                  snappedCenter = closestPoint + direction * circleRadius;
-                                  lineSnapped = true;
-                                  break;
-                                }
-                              }
-                            }
-                          }
-
-                          // 4. 원의 테두리가 선의 끝점에 접하도록 스냅 (다른 스냅이 안된 경우)
-                          if (!cornerSnapped && !pointSnapped && !lineSnapped) {
-                            for (final line in lines) {
-                              // 시작점에 대한 원 테두리 스냅
-                              final distToStart = (line.start - newCenter).distance;
-                              if ((distToStart - circleRadius).abs() < snapDistance) {
-                                final direction = (newCenter - line.start).distance > 0
-                                    ? (newCenter - line.start) / (newCenter - line.start).distance
-                                    : Offset(1, 0);
-                                snappedCenter = line.start + direction * circleRadius;
-                                break;
-                              }
-                              // 끝점에 대한 원 테두리 스냅
-                              final distToEnd = (line.end - newCenter).distance;
-                              if ((distToEnd - circleRadius).abs() < snapDistance) {
-                                final direction = (newCenter - line.end).distance > 0
-                                    ? (newCenter - line.end) / (newCenter - line.end).distance
-                                    : Offset(1, 0);
-                                snappedCenter = line.end + direction * circleRadius;
-                                break;
-                              }
-                            }
-                          }
-
-                          setState(() {
-                            circles[selectedCircleIndex] = Circle(
-                              center: snappedCenter,
-                              radius: circleRadius,
-                              timestamp: circles[selectedCircleIndex].timestamp,
-                            );
-                          });
-                          return;
-                        }
-
                         // 드래그 중인 경우 처리
                         if (isPointDragging || isGroupDragging || _isPanning) {
                           _handlePointDragUpdate(DragUpdateDetails(
@@ -8739,125 +7099,145 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                         }
                         setState(() {
                           // 아이패드 웹 제스처 개선 - 더 명확한 분리
-                          final scaleThreshold = isTablet ? 0.03 : 0.05; // 아이패드에서 더 민감하게
+                          final scaleThreshold =
+                              isTablet ? 0.03 : 0.05; // 아이패드에서 더 민감하게
                           final scaleDelta = (details.scale - 1.0).abs();
                           final pointerCount = details.pointerCount;
-                          
-                          print('제스처 업데이트: scale=${details.scale.toStringAsFixed(3)}, delta=${scaleDelta.toStringAsFixed(3)}, pointers=$pointerCount, isTablet=$isTablet');
-                          
-                          if (pointerCount >= 2 && scaleDelta > scaleThreshold) {
-                                        // 두 손가락 핀치 줌 (명확한 두 손가락 제스처)
-            final newScale = (_initialScale * details.scale).clamp(0.02, 2.0);
+
+                          print(
+                              '제스처 업데이트: scale=${details.scale.toStringAsFixed(3)}, delta=${scaleDelta.toStringAsFixed(3)}, pointers=$pointerCount, isTablet=$isTablet');
+
+                          if (pointerCount >= 2 &&
+                              scaleDelta > scaleThreshold) {
+                            // 두 손가락 핀치 줌 (명확한 두 손가락 제스처)
+                            final newScale = (_initialScale * details.scale)
+                                .clamp(0.02, 2.0);
                             final scaleChange = newScale / viewScale;
-                            
+
                             // 줌 중심점을 기준으로 스케일 조정
                             final focalPoint = details.focalPoint;
                             viewOffset = Offset(
-                              focalPoint.dx - (focalPoint.dx - viewOffset.dx) * scaleChange,
-                              focalPoint.dy - (focalPoint.dy - viewOffset.dy) * scaleChange,
+                              focalPoint.dx -
+                                  (focalPoint.dx - viewOffset.dx) * scaleChange,
+                              focalPoint.dy -
+                                  (focalPoint.dy - viewOffset.dy) * scaleChange,
                             );
-                            
+
                             viewScale = newScale;
 
-                            // 이미 회전이 시작된 경우 회전 계속 적용 (부드러운 회전)
-                            if (_isRotating) {
-                              viewRotation = _initialRotation - details.rotation;
+                            // 회전 처리 - 10도 이상 회전했을 때만 적용
+                            final rotationDegrees =
+                                (details.rotation * 180 / math.pi).abs();
+                            if (rotationDegrees >= 10) {
+                              viewRotation =
+                                  _initialRotation - details.rotation;
 
                               // 모델 좌표의 중심점이 화면의 같은 위치에 유지되도록 viewOffset 조정
-                              if (_rotationCenterModel != null && _rotationCenterScreen != null) {
+                              if (_rotationCenterModel != null &&
+                                  _rotationCenterScreen != null) {
+                                // 회전 후 모델 중심점의 새로운 화면 좌표 계산
                                 final cos = math.cos(viewRotation);
                                 final sin = math.sin(viewRotation);
-                                final rotatedX = _rotationCenterModel!.dx * cos - _rotationCenterModel!.dy * sin;
-                                final rotatedY = _rotationCenterModel!.dx * sin + _rotationCenterModel!.dy * cos;
+                                final rotatedX =
+                                    _rotationCenterModel!.dx * cos -
+                                        _rotationCenterModel!.dy * sin;
+                                final rotatedY =
+                                    _rotationCenterModel!.dx * sin +
+                                        _rotationCenterModel!.dy * cos;
 
+                                // viewOffset을 조정하여 중심점이 원래 화면 위치에 유지되도록
                                 viewOffset = Offset(
-                                  _rotationCenterScreen!.dx - rotatedX * viewScale,
-                                  _rotationCenterScreen!.dy + rotatedY * viewScale,
+                                  _rotationCenterScreen!.dx -
+                                      rotatedX * viewScale,
+                                  _rotationCenterScreen!.dy +
+                                      rotatedY * viewScale,
                                 );
                               }
                             }
 
-                            print('아이패드 핀치 줌: ${viewScale.toStringAsFixed(2)}x, 스케일: ${details.scale.toStringAsFixed(2)}');
-                          } else if (pointerCount == 1 && scaleDelta <= scaleThreshold) {
+                            print(
+                                '아이패드 핀치 줌: ${viewScale.toStringAsFixed(2)}x, 스케일: ${details.scale.toStringAsFixed(2)}, 회전: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
+                          } else if (pointerCount == 1 &&
+                              scaleDelta <= scaleThreshold) {
                             // 한 손가락 팬 (화면 이동)
-                            final deltaX = details.focalPoint.dx - dragStartPos!.dx;
-                            final deltaY = details.focalPoint.dy - dragStartPos!.dy;
-                            
+                            final deltaX =
+                                details.focalPoint.dx - dragStartPos!.dx;
+                            final deltaY =
+                                details.focalPoint.dy - dragStartPos!.dy;
+
                             // 최소 이동 거리 체크 (너무 작은 움직임은 무시)
                             final minMovement = isTablet ? 3.0 : 2.0;
-                            if (deltaX.abs() > minMovement || deltaY.abs() > minMovement) {
+                            if (deltaX.abs() > minMovement ||
+                                deltaY.abs() > minMovement) {
                               viewOffset = Offset(
                                 panStartOffset!.dx + deltaX,
                                 panStartOffset!.dy + deltaY,
                               );
-                              print('아이패드 화면 이동: ${viewOffset.dx.toStringAsFixed(1)}, ${viewOffset.dy.toStringAsFixed(1)}');
+                              print(
+                                  '아이패드 화면 이동: ${viewOffset.dx.toStringAsFixed(1)}, ${viewOffset.dy.toStringAsFixed(1)}');
                             }
-                          } else if (pointerCount >= 2 && scaleDelta <= scaleThreshold) {
+                          } else if (pointerCount >= 2 &&
+                              scaleDelta <= scaleThreshold) {
                             // 두 손가락이지만 스케일 변화가 없는 경우 - 회전 또는 두 손가락 팬
-                            final deltaX = details.focalPoint.dx - dragStartPos!.dx;
-                            final deltaY = details.focalPoint.dy - dragStartPos!.dy;
-                            
+                            final deltaX =
+                                details.focalPoint.dx - dragStartPos!.dx;
+                            final deltaY =
+                                details.focalPoint.dy - dragStartPos!.dy;
+
                             viewOffset = Offset(
                               panStartOffset!.dx + deltaX,
                               panStartOffset!.dy + deltaY,
                             );
 
-                            // 회전 처리 - 15도 이상 회전하면 회전 시작, 이후 모든 각도로 부드럽게 회전
-                            final rotationDegrees = (details.rotation * 180 / math.pi).abs();
-
-                            // 15도 이상 회전하면 회전 모드 시작
-                            if (!_isRotating && rotationDegrees >= 15) {
-                              _isRotating = true;
-                              print('회전 모드 시작 - ${rotationDegrees.toStringAsFixed(1)}°');
-                            }
-
-                            // 회전 모드이면 모든 각도로 부드럽게 회전
-                            if (_isRotating) {
-                              viewRotation = _initialRotation - details.rotation;
+                            // 회전 처리 - 10도 이상 회전했을 때만 적용
+                            final rotationDegrees =
+                                (details.rotation * 180 / math.pi).abs();
+                            if (rotationDegrees >= 10) {
+                              viewRotation =
+                                  _initialRotation - details.rotation;
 
                               // 모델 좌표의 중심점이 화면의 같은 위치에 유지되도록 viewOffset 조정
-                              if (_rotationCenterModel != null && _rotationCenterScreen != null) {
+                              if (_rotationCenterModel != null &&
+                                  _rotationCenterScreen != null) {
                                 // 회전 후 모델 중심점의 새로운 화면 좌표 계산
                                 final cos = math.cos(viewRotation);
                                 final sin = math.sin(viewRotation);
-                                final rotatedX = _rotationCenterModel!.dx * cos - _rotationCenterModel!.dy * sin;
-                                final rotatedY = _rotationCenterModel!.dx * sin + _rotationCenterModel!.dy * cos;
+                                final rotatedX =
+                                    _rotationCenterModel!.dx * cos -
+                                        _rotationCenterModel!.dy * sin;
+                                final rotatedY =
+                                    _rotationCenterModel!.dx * sin +
+                                        _rotationCenterModel!.dy * cos;
 
                                 // viewOffset을 조정하여 중심점이 원래 화면 위치에 유지되도록
                                 viewOffset = Offset(
-                                  _rotationCenterScreen!.dx - rotatedX * viewScale,
-                                  _rotationCenterScreen!.dy + rotatedY * viewScale,
+                                  _rotationCenterScreen!.dx -
+                                      rotatedX * viewScale,
+                                  _rotationCenterScreen!.dy +
+                                      rotatedY * viewScale,
                                 );
                               }
                             }
 
-                            print('아이패드 두 손가락 팬/회전: 위치(${viewOffset.dx.toStringAsFixed(1)}, ${viewOffset.dy.toStringAsFixed(1)}), 회전: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
+                            print(
+                                '아이패드 두 손가락 팬/회전: 위치(${viewOffset.dx.toStringAsFixed(1)}, ${viewOffset.dy.toStringAsFixed(1)}), 회전: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
                           }
                         });
                       },
                       onScaleEnd: (details) {
-                        // 원 드래그 종료 처리
-                        if (isCircleDragging) {
-                          setState(() {
-                            isCircleDragging = false;
-                            circleDragOffset = null;
-                          });
-                          _updateFirebase();  // 변경사항 저장
-                          return;
-                        }
-
                         // 드래그 종료 처리
                         if (isPointDragging || isGroupDragging || _isPanning) {
                           _handlePointDragEnd(DragEndDetails());
                           return;
                         }
-                        print('Scale end - 최종 스케일: ${viewScale.toStringAsFixed(2)}, 터치 수: $_touchCount');
+                        print(
+                            'Scale end - 최종 스케일: ${viewScale.toStringAsFixed(2)}, 터치 수: $_touchCount');
 
                         // 제스처 종료 시 회전 각도를 90도 단위로 스냅
                         setState(() {
                           viewRotation = _snapTo90Degrees(viewRotation);
-                          _isRotating = false; // 회전 상태 리셋
-                          print('회전 종료 - 90도로 스냅: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
+                          print(
+                              '회전 종료 - 90도로 스냅: ${(viewRotation * 180 / math.pi).toStringAsFixed(0)}°');
                         });
 
                         // 아이패드 웹에서 제스처 종료 처리 개선
@@ -8881,33 +7261,38 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           });
                         }
                       },
-                      
+
                       onTap: () {
-                        print('onTap 호출됨 - _lastTapPosition: $_lastTapPosition');
-                        print('현재 모드 - isPointDragging: $isPointDragging, circle: $circleMode, scaling: $_isScaling');
-                        
+                        print(
+                            'onTap 호출됨 - _lastTapPosition: $_lastTapPosition');
+                        print(
+                            '현재 모드 - isPointDragging: $isPointDragging, circle: $circleMode, scaling: $_isScaling');
+
                         // 스케일 제스처 중이거나 점 드래그 중이면 탭 이벤트 무시
                         if (_isScaling || isPointDragging) {
                           print('스케일 제스처 중 또는 점 드래그 중 - onTap 무시');
                           return;
                         }
-                        
+
                         // 데스크톱에서만 onTap 사용 (모바일/태블릿은 onTapDown에서 처리)
                         if (!isMobile && !isTablet) {
                           if (_lastTapPosition == null) {
-                            print('데스크톱: _lastTapPosition이 null - onTapDown이 먼저 호출되지 않음');
+                            print(
+                                '데스크톱: _lastTapPosition이 null - onTapDown이 먼저 호출되지 않음');
                             return;
                           }
-                          
+
                           // 중복 터치 방지 (100ms 이내 중복 터치 무시)
                           final now = DateTime.now();
-                          if (_lastTapTime != null && 
-                              now.difference(_lastTapTime!).inMilliseconds < 100) {
+                          if (_lastTapTime != null &&
+                              now.difference(_lastTapTime!).inMilliseconds <
+                                  100) {
                             print('중복 터치 감지 - 무시');
                             return;
                           }
-                          
-                          print('데스크톱에서 onTap 처리 - circleMode: $circleMode, 위치: $_lastTapPosition');
+
+                          print(
+                              '데스크톱에서 onTap 처리 - circleMode: $circleMode, 위치: $_lastTapPosition');
                           _handleTap(_lastTapPosition!);
                           _focusNode.requestFocus();
                         }
@@ -8915,32 +7300,94 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                       onTapDown: (details) {
                         print('onTapDown 호출됨 - 위치: ${details.localPosition}');
 
-                        // 점 드래그 중이거나 스케일 중이면 무시
-                        if (isPointDragging || _isScaling) {
-                          print('점 드래그 또는 스케일 중 - onTapDown 무시');
+                        // 점 드래그 중이면 무시
+                        if (isPointDragging) {
+                          print('점 드래그 중 - onTapDown 무시');
                           return;
                         }
 
-                        final now = DateTime.now();
+                        // 모바일/태블릿에서 원 모드일 때는 즉시 처리
+                        if ((isMobile || isTablet) && circleMode) {
+                          print('모바일/태블릿 원 모드에서 onTapDown 즉시 처리');
+                          // 스케일 제스처 중이면 무시
+                          if (_isScaling) {
+                            print('스케일 제스처 중 - onTapDown 무시');
+                            return;
+                          }
 
-                        // 터치 위치와 시간 저장
-                        _lastTapPosition = details.localPosition;
-                        _lastTapTime = now;
+                          // 중복 터치 방지 (이전 터치와 현재 터치 비교)
+                          final now = DateTime.now();
+                          if (_lastTapTime != null &&
+                              now.difference(_lastTapTime!).inMilliseconds <
+                                  300) {
+                            print('중복 터치 감지 (300ms 이내) - 무시');
+                            return;
+                          }
 
-                        // 즉시 탭 처리 (모든 모드에서)
-                        _handleTap(details.localPosition);
-                        _focusNode.requestFocus();
+                          // 터치 위치와 시간 저장 (처리 직전에)
+                          setState(() {
+                            _lastTapPosition = details.localPosition;
+                            _lastTapTime = now;
+                          });
+
+                          print('모바일/태블릿 원 모드 터치 처리 실행');
+                          _handleTap(details.localPosition);
+                          _focusNode.requestFocus();
+                        } else {
+                          // 일반 모드 및 데스크톱 원 모드에서는 터치 위치와 시간만 저장
+                          final now = DateTime.now();
+                          setState(() {
+                            _lastTapPosition = details.localPosition;
+                            _lastTapTime = now;
+                          });
+
+                          // 데스크톱 원 모드일 때 디버깅 로그 추가
+                          if (!isMobile && !isTablet && circleMode) {
+                            print(
+                                '데스크톱 원 모드 - onTapDown에서 위치 저장: ${details.localPosition}');
+                          }
+                        }
                       },
                       onTapUp: (details) {
-                        // onTapDown에서 이미 처리했으므로 여기서는 추가 작업만
-                        print('onTapUp 호출됨 (이미 onTapDown에서 처리됨)');
+                        print('onTapUp 호출됨 - 위치: ${details.localPosition}');
+                        print(
+                            '현재 모드 - isPointDragging: $isPointDragging, circle: $circleMode, scaling: $_isScaling');
+
+                        // 스케일 제스처 중이거나 점 드래그 중이면 탭 이벤트 무시
+                        if (_isScaling || isPointDragging) {
+                          print('스케일 제스처 중 또는 점 드래그 중 - onTapUp 무시');
+                          return;
+                        }
+
+                        // 저장된 위치 사용 (더 정확함)
+                        final position =
+                            _lastTapPosition ?? details.localPosition;
+
+                        // 모바일/태블릿에서 원 모드는 onTapDown에서만 처리 (중복 방지)
+                        if ((isMobile || isTablet) && circleMode) {
+                          print('모바일/태블릿 원 모드는 onTapDown에서 처리됨 - onTapUp 무시');
+                          return;
+                        } else if (!circleMode) {
+                          // 일반 모드에서만 onTapUp 사용
+                          print('일반 모드에서 onTapUp 처리');
+                          _handleTap(position);
+                          _focusNode.requestFocus();
+                        } else if (!isMobile && !isTablet && circleMode) {
+                          // 데스크톱 원 모드에서는 onTapUp에서 직접 처리
+                          print('데스크톱 원 모드에서 onTapUp 직접 처리');
+                          _handleTap(position);
+                          _focusNode.requestFocus();
+                        } else {
+                          print('기타 상황 - onTapUp 무시');
+                        }
                       },
                       child: MouseRegion(
                         cursor: SystemMouseCursors.basic,
                         onHover: (event) {
                           // 끝점 호버 효과 제거 - 선만 호버 표시
-                          final newHoveredLineIndex = _findLineNear(event.localPosition);
-                          
+                          final newHoveredLineIndex =
+                              _findLineNear(event.localPosition);
+
                           if (newHoveredLineIndex != hoveredLineIndex) {
                             setState(() {
                               mousePosition = event.localPosition;
@@ -8954,17 +7401,16 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                             hoveredLineIndex = null;
                           });
                         },
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.basic, // 기본 커서 사용 (텍스트 선택 커서 방지)
-                          child: CustomPaint(
-                            painter: LinesPainter(
+                        child: CustomPaint(
+                          painter: LinesPainter(
                             lines: lines,
                             circles: circles,
                             currentPoint: currentPoint,
                             viewScale: viewScale,
                             viewOffset: viewOffset,
                             distanceMeasurements: distanceMeasurements,
-                            firstSelectedLineForDistance: firstSelectedLineForDistance,
+                            firstSelectedLineForDistance:
+                                firstSelectedLineForDistance,
                             selectedMeasurementIndex: selectedMeasurementIndex,
                             viewRotation: viewRotation,
                             selectedLineIndex: selectedLineIndex,
@@ -8988,98 +7434,9 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           ),
                           size: Size.infinite,
                         ),
-                        ),
                       ),
                     ),
                   ),
-                  // 메모 렌더링
-                  ...memos.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final memo = entry.value;
-                    final screenPos = Offset(
-                      memo.position.dx * viewScale + viewOffset.dx,
-                      memo.position.dy * viewScale + viewOffset.dy,
-                    );
-                    final isSelected = selectedMemoIndex == index;
-
-                    return Positioned(
-                      left: screenPos.dx - 6,
-                      top: screenPos.dy - 6,
-                      child: GestureDetector(
-                        onTap: () {
-                          if (isSelected) {
-                            // 이미 선택된 상태에서 다시 탭하면 편집
-                            _showEditMemoDialog(index);
-                          } else {
-                            // 선택 안 된 상태에서 탭하면 선택
-                            setState(() {
-                              selectedMemoIndex = index;
-                            });
-                          }
-                        },
-                        // 선택된 메모 드래그로 이동
-                        onPanStart: isSelected ? (details) {
-                          // 드래그 시작
-                        } : null,
-                        onPanUpdate: isSelected ? (details) {
-                          // 드래그 중 - 메모 위치 업데이트
-                          setState(() {
-                            memos[index].position = Offset(
-                              memos[index].position.dx + details.delta.dx / viewScale,
-                              memos[index].position.dy + details.delta.dy / viewScale,
-                            );
-                          });
-                        } : null,
-                        onPanEnd: isSelected ? (details) {
-                          // 드래그 종료 - Firebase 저장
-                          _updateFirebase();
-                          print('메모 이동 완료: ${memos[index].position}');
-                        } : null,
-                        child: Builder(
-                          builder: (context) {
-                            final fontSize = 14.4 * viewScale.clamp(0.7, 1.3);
-                            final mightWrap = memo.text.contains(' ') && memo.text.length > 15;
-                            final spaceWidth = mightWrap ? fontSize * 0.7 : 0.0;
-                            final basePadding = 14 * viewScale.clamp(0.5, 1.5);
-
-                            return Container(
-                          constraints: BoxConstraints(
-                            maxWidth: 200 * viewScale.clamp(0.5, 2.0),
-                          ),
-                          padding: EdgeInsets.only(
-                            left: basePadding,
-                            right: basePadding - spaceWidth,
-                            top: 8 * viewScale.clamp(0.5, 1.5),
-                            bottom: 8 * viewScale.clamp(0.5, 1.5),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFFFFD700)
-                                  : const Color(0xFFFFD700).withOpacity(0.5),
-                              width: isSelected ? 2 : 1,
-                            ),
-                          ),
-                          child: Text(
-                            memo.text.split('\n').map((line) => line.trimRight()).join('\n'),
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: fontSize,
-                              height: 1.3,
-                            ),
-                            textAlign: TextAlign.left,
-                            softWrap: true,
-                            maxLines: 5,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  }).toList(),
                   // 인라인 입력 - Cursor 스타일
                   if (showInlineInput)
                     Positioned(
@@ -9091,15 +7448,18 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           color: const Color(0xFF161B22),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: pendingOpeningType == 'window' 
-                              ? const Color(0xFF569CD6) // Cursor 파란색
-                              : circleMode && circleCenter != null
-                                ? const Color(0xFFFF7043) // 원 모드 주황색
-                                : selectedCircleIndex >= 0 && arrowDirection != null
-                                  ? const Color(0xFF4CAF50) // 원 이동 모드 녹색
-                                  : selectedLineIndex >= 0
-                                    ? const Color(0xFF6A9955) // Cursor 초록색
-                                    : const Color(0xFFCE9178), // Cursor 주황색
+                            color: pendingOpeningType == 'window'
+                                ? const Color(0xFF569CD6) // Cursor 파란색
+                                : circleMode && circleCenter != null
+                                    ? const Color(0xFFFF7043) // 원 모드 주황색
+                                    : selectedCircleIndex >= 0 &&
+                                            arrowDirection != null
+                                        ? const Color(0xFF4CAF50) // 원 이동 모드 녹색
+                                        : selectedLineIndex >= 0
+                                            ? const Color(
+                                                0xFF6A9955) // Cursor 초록색
+                                            : const Color(
+                                                0xFFCE9178), // Cursor 주황색
                             width: 2,
                           ),
                           boxShadow: [
@@ -9115,9 +7475,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           children: [
                             if (pendingOpeningType != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF569CD6).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF569CD6).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -9131,9 +7493,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                               ),
                             if (circleMode && circleCenter != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF7043).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFFFF7043).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -9145,11 +7509,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                                   ),
                                 ),
                               )
-                            else if (selectedCircleIndex >= 0 && arrowDirection != null)
+                            else if (selectedCircleIndex >= 0 &&
+                                arrowDirection != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF4CAF50).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -9161,11 +7528,14 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                                   ),
                                 ),
                               )
-                            else if (selectedLineIndex >= 0 && arrowDirection == null)
+                            else if (selectedLineIndex >= 0 &&
+                                arrowDirection == null)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6A9955).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF6A9955).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -9190,8 +7560,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                                 focusNode: inlineFocus,
                                 autofocus: true,
                                 keyboardType: (isMobile || isTablet)
-                                  ? TextInputType.none
-                                  : TextInputType.number,
+                                    ? TextInputType.none
+                                    : TextInputType.number,
                                 readOnly: (isMobile || isTablet),
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -9204,50 +7574,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                                 cursorWidth: 0, // 커서 너비 0
                                 cursorHeight: 0, // 커서 높이 0
                                 showCursor: false, // 커서 표시 완전 비활성화
-                                enableInteractiveSelection: false, // 텍스트 선택 비활성화
+                                enableInteractiveSelection:
+                                    false, // 텍스트 선택 비활성화
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 4),
                                   isDense: true,
                                 ),
                                 inputFormatters: [
-                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-.]')),
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[0-9+\-.]')),
                                 ],
-                                onSubmitted: (value) {
-                                  print('TextField onSubmitted - 입력된 값: $value');
-
-                                  // 입력된 텍스트를 숫자로 파싱
-                                  final double? parsedValue = double.tryParse(value);
-
-                                  if (parsedValue != null && parsedValue > 0) {
-                                    // 선택된 선이 있다면 해당 선의 길이를 변경
-                                    if (selectedLineIndex >= 0 && selectedLineIndex < lines.length) {
-                                      print('선택된 선 길이 변경: 인덱스 $selectedLineIndex, 새 길이 $parsedValue');
-                                      _resizeSelectedLine(parsedValue);
-                                    }
-                                    // 방향이 지정되어 있다면 새로운 선 그리기
-                                    else if (inlineDirection.isNotEmpty) {
-                                      print('인라인 입력으로 선 그리기: 방향 $inlineDirection, 길이 $parsedValue');
-                                      drawLineWithDistance(inlineDirection, parsedValue);
-                                    }
-                                  }
-
-                                  // 입력 필드 초기화 및 숨김
-                                  setState(() {
-                                    inlineController.clear();
-                                    showInlineInput = false;
-                                    inlineDirection = "";
-                                  });
-                                },
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  
 
-                  
                   // 하단 컨트롤 패널 - 레이아웃별 분기
                   if (isMobile)
                     _buildMobileControls()
@@ -9257,274 +7602,19 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     _buildTabletControls(),
                 ],
               ),
-              ),
             ),
-          ], // Column children end
-        ), // Column end
-
-        // 창문 속성 입력 필드 (오버레이로 표시)
-        if (showWindowProperties)
-          Positioned(
-            top: 70, // 상단 툴바 바로 아래
-            left: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF161B22),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFF569CD6).withOpacity(0.5),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 모바일 모드에서는 "창문 속성:" 텍스트 숨김
-                  if (!isMobile)
-                    const Text(
-                      '창문 속성:',
-                      style: TextStyle(
-                        color: Color(0xFF569CD6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  if (!isMobile)
-                    const SizedBox(width: 12),
-
-                  // 창문 폭 입력
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        activeWindowField = 'width';
-                      });
-                    },
-                    child: Container(
-                      width: 80,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: activeWindowField == 'width'
-                            ? const Color(0xFF569CD6).withOpacity(0.2)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: activeWindowField == 'width'
-                              ? const Color(0xFF569CD6)
-                              : const Color(0xFF30363D),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '폭(mm)',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF8B949E)),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            windowWidthController.text.isEmpty ? '0' : windowWidthController.text,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: activeWindowField == 'width'
-                                  ? Colors.white
-                                  : const Color(0xFFE6EDF3),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 창문 높이 입력
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        activeWindowField = 'height';
-                      });
-                    },
-                    child: Container(
-                      width: 80,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: activeWindowField == 'height'
-                            ? const Color(0xFF569CD6).withOpacity(0.2)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: activeWindowField == 'height'
-                              ? const Color(0xFF569CD6)
-                              : const Color(0xFF30363D),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '높이(mm)',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF8B949E)),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            windowHeightController.text.isEmpty ? '0' : windowHeightController.text,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: activeWindowField == 'height'
-                                  ? Colors.white
-                                  : const Color(0xFFE6EDF3),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 하단 높이 입력
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        activeWindowField = 'bottomHeight';
-                      });
-                    },
-                    child: Container(
-                      width: 100,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: activeWindowField == 'bottomHeight'
-                            ? const Color(0xFF569CD6).withOpacity(0.2)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: activeWindowField == 'bottomHeight'
-                              ? const Color(0xFF569CD6)
-                              : const Color(0xFF30363D),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '하단높이(mm)',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF8B949E)),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            windowBottomHeightController.text.isEmpty ? '0' : windowBottomHeightController.text,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: activeWindowField == 'bottomHeight'
-                                  ? Colors.white
-                                  : const Color(0xFFE6EDF3),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // 상단 높이 입력
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        activeWindowField = 'topHeight';
-                      });
-                    },
-                    child: Container(
-                      width: 100,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: activeWindowField == 'topHeight'
-                            ? const Color(0xFF569CD6).withOpacity(0.2)
-                            : Colors.transparent,
-                        border: Border.all(
-                          color: activeWindowField == 'topHeight'
-                              ? const Color(0xFF569CD6)
-                              : const Color(0xFF30363D),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '상단높이(mm)',
-                            style: TextStyle(fontSize: 10, color: Color(0xFF8B949E)),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            windowTopHeightController.text.isEmpty ? '0' : windowTopHeightController.text,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: activeWindowField == 'topHeight'
-                                  ? Colors.white
-                                  : const Color(0xFFE6EDF3),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-
-                  // 닫기 버튼
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 16),
-                    color: const Color(0xFF8B949E),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    onPressed: () {
-                      setState(() {
-                        showWindowProperties = false;
-                        selectedWindowLineIndex = null;
-                        activeWindowField = null;
-                        windowWidthController.clear();
-                        windowHeightController.clear();
-                        windowBottomHeightController.clear();
-                        windowTopHeightController.clear();
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ], // Stack children end
-    ), // Stack end
-  ), // RawKeyboardListener end
-);
+          ],
+        ),
+      ),
+    );
   }
-
-
 
   Widget _buildVoiceButton() {
     IconData icon;
     String label;
     Color color;
     bool isPrimary;
-    
+
     if (_isVoiceProcessing) {
       icon = Icons.hourglass_empty_rounded;
       label = '처리 중';
@@ -9541,27 +7631,30 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       color = const Color(0xFF9CDCFE); // 연한 파란색
       isPrimary = false;
     }
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: _isVoiceProcessing ? null : () {
-          print('음성 인식 버튼 클릭됨 - _speechAvailable: $_speechAvailable, _isListening: $_isListening');
-          if (_speechAvailable && !_isVoiceProcessing) {
-            if (_isListening) {
-              // 현재 음성 인식 중이면 중지
-              print('음성 인식 중지');
-              _stopListening();
-            } else {
-              // 음성 인식 시작
-              print('음성 인식 시작');
-              _startListening();
-            }
-          } else if (!_speechAvailable) {
-            print('음성 인식 사용 불가 - 초기화 재시도');
-            _initSpeech();
-          }
-        },
+        onTap: _isVoiceProcessing
+            ? null
+            : () {
+                print(
+                    '음성 인식 버튼 클릭됨 - _speechAvailable: $_speechAvailable, _isListening: $_isListening');
+                if (_speechAvailable && !_isVoiceProcessing) {
+                  if (_isListening) {
+                    // 현재 음성 인식 중이면 중지
+                    print('음성 인식 중지');
+                    _stopListening();
+                  } else {
+                    // 음성 인식 시작
+                    print('음성 인식 시작');
+                    _startListening();
+                  }
+                } else if (!_speechAvailable) {
+                  print('음성 인식 사용 불가 - 초기화 재시도');
+                  _initSpeech();
+                }
+              },
         borderRadius: BorderRadius.circular(6),
         child: Container(
           padding: EdgeInsets.symmetric(
@@ -9666,7 +7759,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
       ),
     );
   }
-  
+
   Widget _buildCursorButtonWithWidget({
     required Widget iconWidget,
     required String label,
@@ -9758,7 +7851,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     if (pendingOpeningType == 'window') {
       buttonColor = const Color(0xFF569CD6); // Cursor 파란색
     }
-    
+
     // 아이콘을 유니코드 화살표로 변환
     String arrowText = '';
     if (icon == Icons.keyboard_arrow_up_rounded) {
@@ -9770,11 +7863,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     } else if (icon == Icons.keyboard_arrow_right_rounded) {
       arrowText = '→';
     }
-    
+
     // 태블릿 모드에서는 40% 크게
     final double buttonSize = isTabletSize ? 67.2 : 48.0; // 48 * 1.4 = 67.2
     final double fontSize = isTabletSize ? 33.6 : 24.0; // 24 * 1.4 = 33.6
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -9784,21 +7877,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           width: buttonSize,
           height: buttonSize,
           decoration: BoxDecoration(
-            // 불투명한 배경색 사용
-            color: const Color(0xFF1E2228), // 어두운 회색 배경 (불투명)
+            color: buttonColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: buttonColor.withOpacity(0.6), // 테두리는 버튼 색상으로
-              width: 1.5,
+              color: buttonColor.withOpacity(0.3),
+              width: 1,
             ),
-            // 버튼에 그림자 추가로 입체감 부여
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Center(
             child: Text(
@@ -9860,7 +7944,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                 ],
               ),
             ),
-            
+
             // 오른쪽: 미니 숫자패드 (박스 제거)
             Container(
               margin: const EdgeInsets.only(right: 15, bottom: 80),
@@ -9905,9 +7989,11 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     children: [
                       _buildCursorNumberButton('0'),
                       const SizedBox(width: 4),
-                      _buildCursorNumberButton('Del', isSpecial: true, color: const Color(0xFFCE9178)),
+                      _buildCursorNumberButton('Del',
+                          isSpecial: true, color: const Color(0xFFCE9178)),
                       const SizedBox(width: 4),
-                      _buildCursorNumberButton('Ent', isSpecial: true, color: const Color(0xFF6A9955)),
+                      _buildCursorNumberButton('Ent',
+                          isSpecial: true, color: const Color(0xFF6A9955)),
                     ],
                   ),
                 ],
@@ -9935,10 +8021,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // 왼쪽: 방향키 패널
+            // 왼쪽: 방향키 패널 (배경 제거)
             Container(
-              margin: const EdgeInsets.only(left: 60, bottom: 70),
-              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(
+                  left: 60, bottom: 70), // 왼쪽 60px, 하단 70px 추가 여백
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -9948,7 +8034,7 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                     onPressed: () => onDirectionKey('Up'),
                     isTabletSize: true,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 6), // 숫자 버튼과 동일한 간격
                   // 중간 줄 (왼쪽, 아래, 오른쪽)
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -9958,13 +8044,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                         onPressed: () => onDirectionKey('Left'),
                         isTabletSize: true,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 6), // 숫자 버튼과 동일한 간격
                       _buildDirectionButton(
                         icon: Icons.keyboard_arrow_down_rounded,
                         onPressed: () => onDirectionKey('Down'),
                         isTabletSize: true,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 6), // 숫자 버튼과 동일한 간격
                       _buildDirectionButton(
                         icon: Icons.keyboard_arrow_right_rounded,
                         onPressed: () => onDirectionKey('Right'),
@@ -9976,14 +8062,13 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               ),
             ),
 
-            // 오른쪽: 숫자패드
+            // 오른쪽: 숫자패드 (박스 제거)
             Container(
               margin: const EdgeInsets.only(right: 30, bottom: 120),
-              padding: const EdgeInsets.all(12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 첫 번째 줄: 7, 8, 9, -
+                  // 첫 번째 줄: 7, 8, 9, - (태블릿 모드에서 10% 크게)
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -9993,7 +8078,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                       const SizedBox(width: 6),
                       _buildCursorNumberButton('9', isTabletSize: true),
                       const SizedBox(width: 6),
-                      _buildCursorNumberButton('-', isSpecial: true, color: const Color(0xFF569CD6), isTabletSize: true),
+                      _buildCursorNumberButton('-',
+                          isSpecial: true,
+                          color: const Color(0xFF569CD6),
+                          isTabletSize: true),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -10007,7 +8095,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                       const SizedBox(width: 6),
                       _buildCursorNumberButton('6', isTabletSize: true),
                       const SizedBox(width: 6),
-                      _buildCursorNumberButton('+', isSpecial: true, color: const Color(0xFF569CD6), isTabletSize: true),
+                      _buildCursorNumberButton('+',
+                          isSpecial: true,
+                          color: const Color(0xFF569CD6),
+                          isTabletSize: true),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -10036,16 +8127,25 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _buildCursorNumberButton('0', isWide: true, isTabletSize: true),
+                              // 0 버튼 (2칸 크기)
+                              _buildCursorNumberButton('0',
+                                  isWide: true, isTabletSize: true),
                               const SizedBox(width: 6),
-                              _buildCursorNumberButton('Del', isSpecial: true, color: const Color(0xFFCE9178), isTabletSize: true),
+                              _buildCursorNumberButton('Del',
+                                  isSpecial: true,
+                                  color: const Color(0xFFCE9178),
+                                  isTabletSize: true),
                             ],
                           ),
                         ],
                       ),
                       const SizedBox(width: 6),
                       // 오른쪽 Enter 버튼 (2줄 높이)
-                      _buildCursorNumberButton('Ent', isTall: true, isSpecial: true, color: const Color(0xFF6A9955), isTabletSize: true),
+                      _buildCursorNumberButton('Ent',
+                          isTall: true,
+                          isSpecial: true,
+                          color: const Color(0xFF6A9955),
+                          isTabletSize: true),
                     ],
                   ),
                 ],
@@ -10078,151 +8178,79 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             offset: const Offset(0, 4),
             child: Material(
               color: Colors.transparent,
-              child: IntrinsicWidth(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF252526),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF3C3C3C),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF252526),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF3C3C3C),
+                    width: 1,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    // 페이지 목록
-                    ...pages.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final pageInfo = entry.value;
-                      final isSelected = pageInfo.id == currentPageId;
-                      final isFirst = index == 0;
-                      final isLast = index == pages.length - 1;
-
-                      return InkWell(
-                        onTap: () {
-                          print('페이지 선택: ${pageInfo.id}');
-                          _changePageById(pageInfo.id);
-                          _hideDropdownOverlay();
-                        },
-                        borderRadius: isFirst && pages.length > 1
-                            ? const BorderRadius.only(topLeft: Radius.circular(7), topRight: Radius.circular(7))
-                            : null,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFF606060)
-                                : Colors.transparent,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // 선택 체크 아이콘
-                              if (isSelected)
-                                const Icon(
-                                  Icons.check,
-                                  color: Color(0xFFC0C0C0),
-                                  size: 14,
-                                ),
-                              if (isSelected) const SizedBox(width: 4),
-
-                              // 페이지 번호 또는 이름
-                              Text(
-                                pageInfo.displayName,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.8),
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                                ),
-                              ),
-
-                              // 빈 페이지 표시
-                              if (pageLinesCount[pageInfo.id] == 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Text(
-                                    '(빈)',
-                                    style: TextStyle(
-                                      color: Colors.grey.withOpacity(0.6),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-
-                              // 삭제 버튼 (커스텀 페이지만)
-                              if (pageInfo.isDeletable) ...[
-                                const SizedBox(width: 6),
-                                InkWell(
-                                  onTap: () {
-                                    _hideDropdownOverlay();
-                                    _showDeletePageConfirmDialog(pageInfo.id, pageInfo.displayName);
-                                  },
-                                  child: Icon(
-                                    Icons.close,
-                                    color: Colors.grey.withOpacity(0.6),
-                                    size: 16,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-
-                    // 구분선
-                    Container(
-                      height: 1,
-                      color: const Color(0xFF3C3C3C),
-                    ),
-
-                    // +추가 버튼
-                    InkWell(
-                      onTap: () {
-                        _hideDropdownOverlay();
-                        _showAddPageDialog();
-                      },
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(7),
-                        bottomRight: Radius.circular(7),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.add,
-                              color: Color(0xFF9CDCFE),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '페이지 추가',
-                              style: TextStyle(
-                                color: const Color(0xFF9CDCFE),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(10, (index) {
+                    final page = index + 1;
+                    final isSelected = page == currentPage;
+
+                    return InkWell(
+                      onTap: () {
+                        print('페이지 선택: $page');
+                        _changePage(page);
+                        _hideDropdownOverlay();
+                      },
+                      borderRadius: page == 1
+                          ? const BorderRadius.only(
+                              topLeft: Radius.circular(7),
+                              topRight: Radius.circular(7))
+                          : page == 10
+                              ? const BorderRadius.only(
+                                  bottomLeft: Radius.circular(7),
+                                  bottomRight: Radius.circular(7))
+                              : null,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF606060)
+                              : Colors.transparent,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isSelected)
+                              const Icon(
+                                Icons.check,
+                                color: Color(0xFFC0C0C0),
+                                size: 16,
+                              ),
+                            if (isSelected) const SizedBox(width: 6),
+                            Text(
+                              '$page',
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.white.withOpacity(0.8),
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.w500
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            const SizedBox(width: 20), // 최소 너비 확보
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ),
             ),
@@ -10230,10 +8258,10 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
         ],
       ),
     );
-    
+
     Overlay.of(context).insert(_dropdownOverlay!);
   }
-  
+
   // 드롭다운 오버레이 숨기기
   void _hideDropdownOverlay() {
     _dropdownOverlay?.remove();
@@ -10243,370 +8271,8 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     });
   }
 
-  // 기본 페이지 목록 초기화 (1-10)
-  void _initializeDefaultPages() {
-    pages = List.generate(
-      10,
-      (index) => PageInfo(
-        id: 'page${index + 1}',
-        number: index + 1,
-        isDeletable: false,
-      ),
-    );
-  }
-
-  // Firebase에서 페이지 목록 로드
-  Future<void> _loadPagesFromFirebase() async {
-    try {
-      final snapshot = await FirebaseDatabase.instance
-          .ref('drawing/pagesList')
-          .get();
-
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>?;
-        if (data != null) {
-          final customPages = <PageInfo>[];
-          data.forEach((key, value) {
-            final pageInfo = PageInfo.fromJson(value as Map<dynamic, dynamic>);
-            // 커스텀 페이지만 추가 (기본 페이지는 이미 있음)
-            if (pageInfo.isDeletable) {
-              customPages.add(pageInfo);
-            }
-          });
-
-          setState(() {
-            // 기본 페이지 뒤에 커스텀 페이지 추가
-            pages = [...pages.where((p) => !p.isDeletable), ...customPages];
-          });
-        }
-      }
-    } catch (e) {
-      print('페이지 목록 로드 실패: $e');
-    }
-  }
-
-  // Firebase에 페이지 목록 저장
-  Future<void> _savePagesToFirebase() async {
-    try {
-      final customPages = pages.where((p) => p.isDeletable).toList();
-      final pagesMap = {
-        for (var page in customPages) page.id: page.toJson(),
-      };
-
-      await FirebaseDatabase.instance
-          .ref('drawing/pagesList')
-          .set(pagesMap);
-    } catch (e) {
-      print('페이지 목록 저장 실패: $e');
-    }
-  }
-
-  // 페이지 추가
-  Future<void> _addPage(String pageName) async {
-    final newId = 'custom_${DateTime.now().millisecondsSinceEpoch}';
-    final newPage = PageInfo(
-      id: newId,
-      name: pageName,
-      isDeletable: true,
-    );
-
-    setState(() {
-      pages.add(newPage);
-    });
-
-    await _savePagesToFirebase();
-  }
-
-  // 페이지 삭제
-  Future<void> _deletePage(String pageId) async {
-    final pageToDelete = pages.firstWhere((p) => p.id == pageId);
-
-    if (!pageToDelete.isDeletable) {
-      print('기본 페이지는 삭제할 수 없습니다.');
-      return;
-    }
-
-    // 현재 페이지를 삭제하려는 경우, 다른 페이지로 이동
-    if (currentPageId == pageId) {
-      await _changePageById('page1');
-    }
-
-    setState(() {
-      pages.removeWhere((p) => p.id == pageId);
-    });
-
-    await _savePagesToFirebase();
-
-    // Firebase에서 해당 페이지의 데이터도 삭제
-    try {
-      await FirebaseDatabase.instance
-          .ref('drawing/$pageId')
-          .remove();
-    } catch (e) {
-      print('페이지 데이터 삭제 실패: $e');
-    }
-  }
-
-  // 페이지 추가 다이얼로그 표시
-  void _showAddPageDialog() {
-    final TextEditingController controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF252526),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(
-              color: Color(0xFF3C3C3C),
-              width: 1,
-            ),
-          ),
-          child: Container(
-            width: 300,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '새 페이지 추가',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: '페이지 이름을 입력하세요',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 14,
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFF1E1E1E),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF3C3C3C),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF9CDCFE),
-                        width: 1,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                  ),
-                  onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      Navigator.of(context).pop();
-                      _addPage(value.trim());
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.8),
-                      ),
-                      child: const Text('취소'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (controller.text.trim().isNotEmpty) {
-                          Navigator.of(context).pop();
-                          _addPage(controller.text.trim());
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF9CDCFE),
-                        foregroundColor: const Color(0xFF1E1E1E),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      child: const Text('추가'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 페이지 삭제 확인 다이얼로그
-  void _showDeletePageConfirmDialog(String pageId, String pageName) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF252526),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: const BorderSide(
-              color: Color(0xFF3C3C3C),
-              width: 1,
-            ),
-          ),
-          child: Container(
-            width: 320,
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '페이지 삭제',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                    children: [
-                      const TextSpan(text: '정말 "'),
-                      TextSpan(
-                        text: pageName,
-                        style: const TextStyle(
-                          color: Color(0xFF9CDCFE),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const TextSpan(text: '" 페이지를 삭제하시겠습니까?\n\n'),
-                      TextSpan(
-                        text: '페이지의 모든 데이터가 삭제되며 복구할 수 없습니다.',
-                        style: TextStyle(
-                          color: Colors.red.withOpacity(0.8),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.8),
-                      ),
-                      child: const Text('취소'),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _deletePage(pageId);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.8),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      child: const Text('삭제'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 모든 페이지의 선 개수 확인 (병렬 로딩)
-  Future<void> _loadAllPagesLinesCount() async {
-    // 현재 페이지는 즉시 업데이트
-    pageLinesCount[currentPageId] = lines.length;
-
-    // 로딩이 필요한 페이지들만 필터링
-    final pagesToLoad = pages.where((page) =>
-      page.id != currentPageId && !pageLinesCount.containsKey(page.id)
-    ).toList();
-
-    if (pagesToLoad.isEmpty) return;
-
-    // 병렬로 모든 페이지 로딩
-    await Future.wait(pagesToLoad.map((page) async {
-      try {
-        final snapshot = await FirebaseDatabase.instance
-            .ref('drawing/${page.id}/lines')
-            .get();
-
-        if (snapshot.exists) {
-          final data = snapshot.value as Map<dynamic, dynamic>?;
-          pageLinesCount[page.id] = data?.length ?? 0;
-        } else {
-          pageLinesCount[page.id] = 0;
-        }
-      } catch (e) {
-        print('페이지 ${page.id} 선 개수 확인 실패: $e');
-        pageLinesCount[page.id] = null;
-      }
-    }));
-
-    // UI 업데이트
-    if (mounted && isPageDropdownOpen) {
-      setState(() {});
-    }
-  }
-
   // 페이지 드롭다운 위젯
   Widget _buildPageDropdown() {
-    // 현재 페이지 정보 가져오기
-    final currentPageInfo = pages.firstWhere(
-      (p) => p.id == currentPageId,
-      orElse: () => PageInfo(id: 'page1', number: 1, isDeletable: false),
-    );
-
     return CompositedTransformTarget(
       link: _dropdownLayerLink,
       child: Material(
@@ -10617,8 +8283,6 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
               isPageDropdownOpen = !isPageDropdownOpen;
               if (isPageDropdownOpen) {
                 _showDropdownOverlay();
-                // 백그라운드에서 모든 페이지의 선 개수 확인
-                _loadAllPagesLinesCount();
               } else {
                 _hideDropdownOverlay();
               }
@@ -10632,32 +8296,28 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
             ),
             decoration: BoxDecoration(
               color: isPageDropdownOpen
-                ? const Color(0xFF707070)
-                : const Color(0xFF707070).withOpacity(0.1),
+                  ? const Color(0xFF707070)
+                  : const Color(0xFF707070).withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: isPageDropdownOpen
-                  ? const Color(0xFF707070)
-                  : const Color(0xFF707070).withOpacity(0.3),
+                    ? const Color(0xFF707070)
+                    : const Color(0xFF707070).withOpacity(0.3),
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: isMobile ? 16 : 20,
-                    maxWidth: isMobile ? 100 : 120, // 긴 이름을 위한 최대 너비
-                  ),
+                SizedBox(
+                  width: isMobile ? 16 : 20, // 모바일에서 너비 줄임
                   child: Text(
-                    currentPageInfo.displayName,
+                    '$currentPage',
                     textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: isPageDropdownOpen
-                        ? Colors.white
-                        : const Color(0xFFC0C0C0),
+                          ? Colors.white
+                          : const Color(0xFFC0C0C0),
                       fontSize: 12, // 12px로 변경
                       fontWeight: FontWeight.w500,
                     ),
@@ -10665,10 +8325,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
                 ),
                 SizedBox(width: isMobile ? 2 : 4), // 모바일에서 간격 줄임
                 Icon(
-                  isPageDropdownOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  color: isPageDropdownOpen 
-                    ? Colors.white
-                    : const Color(0xFFC0C0C0),
+                  isPageDropdownOpen
+                      ? Icons.arrow_drop_up
+                      : Icons.arrow_drop_down,
+                  color: isPageDropdownOpen
+                      ? Colors.white
+                      : const Color(0xFFC0C0C0),
                   size: isMobile ? 14 : 16, // 모바일에서 아이콘 크기 줄임
                 ),
               ],
@@ -10679,169 +8341,91 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     );
   }
 
-  // 설명서 팝업 표시
-  void _showManualPopup(String manualUrl, String modeLabel) {
-    // iframe을 위한 고유 ID 생성
-    final iframeId = 'manual-iframe-${DateTime.now().millisecondsSinceEpoch}';
-
-    // iframe 요소 생성
-    final iframe = html.IFrameElement()
-      ..src = manualUrl
-      ..style.border = 'none'
-      ..style.width = '100%'
-      ..style.height = '100%'
-      ..id = iframeId;
-
-    // ignore: undefined_prefixed_name
-    ui_web.platformViewRegistry.registerViewFactory(iframeId, (int viewId) => iframe);
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFF3C3C3C), width: 1),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: MediaQuery.of(context).size.height * 0.85,
-            padding: const EdgeInsets.all(0),
-            child: Column(
-              children: [
-                // 헤더
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF2D2D2D),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.menu_book_rounded,
-                            color: Color(0xFF9CDCFE),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '$modeLabel 설명서',
-                            style: const TextStyle(
-                              color: Color(0xFFD4D4D4),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Color(0xFF808080),
-                          size: 20,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 16,
-                      ),
-                    ],
-                  ),
-                ),
-                // iframe 내용
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    child: HtmlElementView(viewType: iframeId),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildLayoutSwitchButton() {
-    const color = Color(0xFF9CDCFE);
+    IconData getLayoutIcon() {
+      switch (layoutMode) {
+        case 'mobile':
+          return Icons.smartphone_rounded;
+        case 'tablet':
+          return Icons.tablet_rounded;
+        case 'desktop':
+          return Icons.desktop_windows_rounded;
+        default:
+          return Icons.smartphone_rounded; // 기본값은 모바일
+      }
+    }
+
+    String getLayoutLabel() {
+      switch (layoutMode) {
+        case 'mobile':
+          return '모바일';
+        case 'tablet':
+          return '태블릿';
+        case 'desktop':
+          return '데스크톱';
+        default:
+          return '모바일'; // 기본값은 모바일
+      }
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          // 현재 모드에 해당하는 설명서를 내부 팝업으로 열기
-          String manualUrl;
-          String modeLabel;
-          switch (layoutMode) {
-            case 'mobile':
-              manualUrl = 'manual_mobile.html';
-              modeLabel = '모바일';
-              break;
-            case 'tablet':
-              manualUrl = 'manual_tablet.html';
-              modeLabel = '태블릿';
-              break;
-            case 'desktop':
-              manualUrl = 'manual_desktop.html';
-              modeLabel = '데스크톱';
-              break;
-            default:
-              manualUrl = 'manual_mobile.html';
-              modeLabel = '모바일';
-              break;
-          }
-          _showManualPopup(manualUrl, modeLabel);
+          setState(() {
+            // 모바일 → 태블릿 → 데스크톱 → 모바일 순환
+            switch (layoutMode) {
+              case 'mobile':
+                layoutMode = 'tablet';
+                break;
+              case 'tablet':
+                layoutMode = 'desktop';
+                break;
+              case 'desktop':
+                layoutMode = 'mobile';
+                break;
+              default:
+                layoutMode = 'mobile'; // 기본값은 모바일
+                break;
+            }
+          });
+
+          // 레이아웃 변경 후 뷰 맞춤 자동 실행
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (isMobile || isTablet) {
+              print('레이아웃 변경 후 - 모바일/태블릿 모드로 currentPoint 중심 맞춤');
+              centerCurrentPoint();
+            } else {
+              fitViewToDrawing();
+            }
+          });
         },
         borderRadius: BorderRadius.circular(6),
         child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 6 : 8,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
+            color: const Color(0xFF9CDCFE).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: const Color(0xFF9CDCFE).withOpacity(0.3),
               width: 1,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 14,
-                height: 14,
-                child: Center(
-                  child: Text(
-                    '?',
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      height: 1,
-                    ),
-                  ),
-                ),
+              Icon(
+                getLayoutIcon(),
+                color: const Color(0xFF9CDCFE),
+                size: 16,
               ),
-              // 모바일이 아닐 때만 텍스트 표시
-              if (!isMobile) ...[
-                const SizedBox(width: 4),
+              // 모바일 모드에서는 텍스트 숨김, 다른 모드에서는 화면이 모바일이 아닐 때만 텍스트 표시
+              if (layoutMode != 'mobile' && !isMobile) ...[
+                const SizedBox(width: 6),
                 Text(
-                  '설명서',
-                  style: TextStyle(
-                    color: color,
+                  getLayoutLabel(),
+                  style: const TextStyle(
+                    color: Color(0xFF9CDCFE),
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -10863,15 +8447,15 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
     bool isTabletSize = false, // 태블릿 모드용 크기 옵션
   }) {
     Color buttonColor = color ?? const Color(0xFF9CDCFE); // Cursor 연한 파란색
-    
+
     // 태블릿 모드에서는 40% 크게
     final double baseSize = isTabletSize ? 67.2 : 48.0; // 48 * 1.4 = 67.2
     final double wideSize = isTabletSize ? 142.8 : 102.0; // 102 * 1.4 = 142.8
     final double fontSize = isTabletSize ? 22.4 : 16.0; // 16 * 1.4 = 22.4
-    
+
     double width = isWide ? wideSize : baseSize;
     double height = isTall ? wideSize : baseSize; // isTall도 같은 비율로 증가
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -10881,25 +8465,12 @@ class _LineDrawerScreenState extends State<LineDrawerScreen> {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            // 불투명한 배경색 사용
-            color: isSpecial
-                ? buttonColor
-                : const Color(0xFF1E2228), // 어두운 회색 배경 (불투명)
+            color: isSpecial ? buttonColor : buttonColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: isSpecial
-                  ? buttonColor
-                  : buttonColor.withOpacity(0.6), // 테두리는 조금 더 진하게
-              width: 1.5,
+              color: isSpecial ? buttonColor : buttonColor.withOpacity(0.3),
+              width: 1,
             ),
-            // 버튼에 그림자 추가로 입체감 부여
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Center(
             child: Text(
@@ -10980,38 +8551,45 @@ class LinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     // selectedLineIndex 유효성 검사
-    final safeSelectedIndex = (selectedLineIndex >= 0 && selectedLineIndex < lines.length) 
-        ? selectedLineIndex 
-        : -1;
-    
-    // hoveredLineIndex 유효성 검사  
-    final safeHoveredIndex = (hoveredLineIndex != null && hoveredLineIndex! >= 0 && hoveredLineIndex! < lines.length)
+    final safeSelectedIndex =
+        (selectedLineIndex >= 0 && selectedLineIndex < lines.length)
+            ? selectedLineIndex
+            : -1;
+
+    // hoveredLineIndex 유효성 검사
+    final safeHoveredIndex = (hoveredLineIndex != null &&
+            hoveredLineIndex! >= 0 &&
+            hoveredLineIndex! < lines.length)
         ? hoveredLineIndex
         : null;
-    
+
     // 1. 먼저 모든 선 그리기 (선이 있는 경우에만)
     for (int i = 0; i < lines.length; i++) {
       try {
         final line = lines[i];
         final start = _modelToScreen(line.start);
         final end = _modelToScreen(line.end);
-        
+
         // 줌 레벨에 따른 동적 선 두께 계산 (더 보수적으로 조정)
         // 그룹에 속한 선이나 개별 선택된 선은 굵게 표시
-        final isSelected = i == safeSelectedIndex || selectedGroupLines.contains(i);
+        final isSelected =
+            i == safeSelectedIndex || selectedGroupLines.contains(i);
         final baseStrokeWidth = isSelected ? 3.0 : 2.0;
-        final adaptiveStrokeWidth = viewScale < 0.05 
-          ? baseStrokeWidth / viewScale * 0.01 // 매우 작은 줌에서 선 두께 약간 증가
-          : baseStrokeWidth;
-        
+        final adaptiveStrokeWidth = viewScale < 0.05
+            ? baseStrokeWidth / viewScale * 0.01 // 매우 작은 줌에서 선 두께 약간 증가
+            : baseStrokeWidth;
+
         // 선택된 그룹에 속한 선인지 확인
         final isInSelectedGroup = selectedGroupLines.contains(i);
-        
+
         // 더블클릭한 선에 대해서만 디버깅
-        if (selectedGroupLines.isNotEmpty && safeSelectedIndex >= 0 && i == safeSelectedIndex) {
-          print('Line $i: isInSelectedGroup=$isInSelectedGroup, safeSelectedIndex=$safeSelectedIndex, selectedGroupLines=$selectedGroupLines');
+        if (selectedGroupLines.isNotEmpty &&
+            safeSelectedIndex >= 0 &&
+            i == safeSelectedIndex) {
+          print(
+              'Line $i: isInSelectedGroup=$isInSelectedGroup, safeSelectedIndex=$safeSelectedIndex, selectedGroupLines=$selectedGroupLines');
         }
-        
+
         // 색상 결정 로직 수정: 그룹 선택이 우선
         Color lineColor;
         if (isInSelectedGroup) {
@@ -11021,47 +8599,45 @@ class LinesPainter extends CustomPainter {
         } else {
           lineColor = Colors.white; // 기본은 흰색
         }
-        
+
         final paint = Paint()
           ..strokeWidth = adaptiveStrokeWidth.clamp(1.0, 4.0) // 최소 1, 최대 4
           ..color = lineColor;
-        
+
         if (line.openingType == 'window') {
           // 호버 효과가 있는 경우 - 창문에만 적용
           if (i == safeHoveredIndex && i != safeSelectedIndex) {
-            final hoverStrokeWidth = viewScale < 0.05 
-              ? 5.0 / viewScale * 0.01 
-              : 5.0;
+            final hoverStrokeWidth =
+                viewScale < 0.05 ? 5.0 / viewScale * 0.01 : 5.0;
             final hoverPaint = Paint()
               ..strokeWidth = hoverStrokeWidth.clamp(2.0, 6.0)
               ..color = const Color(0xFF00ACC1).withOpacity(0.5)
               ..strokeCap = StrokeCap.round;
             _drawDashedLine(canvas, start, end, hoverPaint, 5, 5);
           }
-          
+
           // 창문 - 점선 (이미 위에서 색상을 설정했으므로 기본 창문색만 처리)
           if (!isInSelectedGroup && i != safeSelectedIndex) {
             paint.color = const Color(0xFF00ACC1); // 기본 창문색만 설정
           }
-          final windowStrokeWidth = viewScale < 0.05 
-            ? 3.0 / viewScale * 0.01 
-            : 3.0;
+          final windowStrokeWidth =
+              viewScale < 0.05 ? 3.0 / viewScale * 0.01 : 3.0;
           paint.strokeWidth = windowStrokeWidth.clamp(1.0, 4.0);
           _drawDashedLine(canvas, start, end, paint, 5, 5);
-          
+
           // 이중선
-          final angle = math.atan2(line.end.dy - line.start.dy, line.end.dx - line.start.dx);
+          final angle = math.atan2(
+              line.end.dy - line.start.dy, line.end.dx - line.start.dx);
           final offset = 5 * viewScale;
           final nx = offset * math.sin(angle);
           final ny = -offset * math.cos(angle);
-          
-          final doubleStrokeWidth = viewScale < 0.05 
-            ? 1.0 / viewScale * 0.01 
-            : 1.0;
+
+          final doubleStrokeWidth =
+              viewScale < 0.05 ? 1.0 / viewScale * 0.01 : 1.0;
           final doublePaint = Paint()
             ..color = paint.color // 위에서 설정한 색상 그대로 사용
             ..strokeWidth = doubleStrokeWidth.clamp(0.5, 2.0);
-          
+
           canvas.drawLine(
             Offset(start.dx + nx, start.dy + ny),
             Offset(end.dx + nx, end.dy + ny),
@@ -11076,25 +8652,23 @@ class LinesPainter extends CustomPainter {
           // 일반 선 호버 효과 - 선택되지 않은 경우에만
           if (i == safeHoveredIndex && i != safeSelectedIndex) {
             // 그림자 효과
-            final shadowStrokeWidth = viewScale < 0.05 
-              ? 4.0 / viewScale * 0.01 
-              : 4.0;
+            final shadowStrokeWidth =
+                viewScale < 0.05 ? 4.0 / viewScale * 0.01 : 4.0;
             final shadowPaint = Paint()
               ..strokeWidth = shadowStrokeWidth.clamp(2.0, 6.0)
               ..color = Colors.white.withOpacity(0.2)
               ..strokeCap = StrokeCap.round
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
             canvas.drawLine(start, end, shadowPaint);
-            
+
             // 밝은 선
-            final hoverStrokeWidth = viewScale < 0.05 
-              ? 2.5 / viewScale * 0.01 
-              : 2.5;
+            final hoverStrokeWidth =
+                viewScale < 0.05 ? 2.5 / viewScale * 0.01 : 2.5;
             paint.strokeWidth = hoverStrokeWidth.clamp(1.0, 4.0);
             paint.color = Colors.white;
           }
           // 이 부분 삭제 - 이미 위에서 색상과 두께를 설정했으므로 중복되고 오히려 문제를 일으킴
-          
+
           canvas.drawLine(start, end, paint);
         }
       } catch (e) {
@@ -11102,33 +8676,34 @@ class LinesPainter extends CustomPainter {
         print('LinesPainter: 선 $i 렌더링 오류 - $e');
       }
     }
-    
+
     // 2. 모든 원 그리기
     for (int i = 0; i < circles.length; i++) {
       try {
         final circle = circles[i];
         final centerScreen = _modelToScreen(circle.center);
         final radiusScreen = circle.radius * viewScale;
-        
+
         // 선택된 원은 녹색, 일반 원은 흰색
         final isSelected = i == selectedCircleIndex;
-        final circleColor = isSelected 
-          ? const Color(0xFF4CAF50) // 선택된 원: 녹색 (선과 동일)
-          : Colors.white; // 일반 원: 흰색 (선과 동일)
-        
+        final circleColor = isSelected
+            ? const Color(0xFF4CAF50) // 선택된 원: 녹색 (선과 동일)
+            : Colors.white; // 일반 원: 흰색 (선과 동일)
+
         // 줌 레벨에 따른 동적 원 두께 계산 (더 보수적으로 조정)
         final baseCircleStrokeWidth = isSelected ? 3.0 : 2.0;
-        final adaptiveCircleStrokeWidth = viewScale < 0.05 
-          ? baseCircleStrokeWidth / viewScale * 0.01 
-          : baseCircleStrokeWidth;
-        
+        final adaptiveCircleStrokeWidth = viewScale < 0.05
+            ? baseCircleStrokeWidth / viewScale * 0.01
+            : baseCircleStrokeWidth;
+
         final paint = Paint()
           ..color = circleColor
-          ..strokeWidth = adaptiveCircleStrokeWidth.clamp(1.0, 4.0) // 선택된 원은 더 두껍게
+          ..strokeWidth =
+              adaptiveCircleStrokeWidth.clamp(1.0, 4.0) // 선택된 원은 더 두껍게
           ..style = PaintingStyle.stroke;
-        
+
         canvas.drawCircle(centerScreen, radiusScreen, paint);
-        
+
         // 중심점 표시 또는 화살표 표시
         if (isSelected && arrowDirection != null) {
           // 선택된 원에 방향키가 설정된 경우 화살표 표시
@@ -11147,30 +8722,30 @@ class LinesPainter extends CustomPainter {
         print('LinesPainter: 원 렌더링 오류 - $e');
       }
     }
-    
+
     // 3. 모든 치수 표시 (선 위에 그려짐)
     for (final line in lines) {
       _drawDimension(canvas, line);
     }
-    
+
     // 4. 원의 치수 표시
     for (final circle in circles) {
       _drawCircleDimension(canvas, circle);
     }
-    
+
     // 점 드래그 미리보기
     if (isPointDragging && pointDragStart != null && pointDragEnd != null) {
       final startScreen = _modelToScreen(pointDragStart!);
       final endScreen = _modelToScreen(pointDragEnd!);
-      
+
       // 점 드래그 미리보기 선 그리기 (실선으로)
       final previewPaint = Paint()
         ..color = const Color(0xFF4CAF50).withOpacity(0.8) // 녹색 반투명
         ..strokeWidth = 3
         ..strokeCap = StrokeCap.round;
-      
+
       canvas.drawLine(startScreen, endScreen, previewPaint);
-      
+
       // 시작점 표시 (파란색)
       canvas.drawCircle(
         startScreen,
@@ -11179,7 +8754,7 @@ class LinesPainter extends CustomPainter {
           ..color = const Color(0xFF2196F3).withOpacity(0.3)
           ..style = PaintingStyle.fill,
       );
-      
+
       canvas.drawCircle(
         startScreen,
         5,
@@ -11187,7 +8762,7 @@ class LinesPainter extends CustomPainter {
           ..color = Colors.white
           ..style = PaintingStyle.fill,
       );
-      
+
       canvas.drawCircle(
         startScreen,
         5,
@@ -11196,7 +8771,7 @@ class LinesPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
-      
+
       // 끝점 표시 (녹색)
       canvas.drawCircle(
         endScreen,
@@ -11205,7 +8780,7 @@ class LinesPainter extends CustomPainter {
           ..color = const Color(0xFF4CAF50).withOpacity(0.3)
           ..style = PaintingStyle.fill,
       );
-      
+
       canvas.drawCircle(
         endScreen,
         5,
@@ -11213,7 +8788,7 @@ class LinesPainter extends CustomPainter {
           ..color = Colors.white
           ..style = PaintingStyle.fill,
       );
-      
+
       canvas.drawCircle(
         endScreen,
         5,
@@ -11222,14 +8797,14 @@ class LinesPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
-      
+
       // 길이 표시
       final distance = (pointDragEnd! - pointDragStart!).distance;
       final midPoint = Offset(
         (startScreen.dx + endScreen.dx) / 2,
         (startScreen.dy + endScreen.dy) / 2,
       );
-      
+
       _drawText(
         canvas,
         '${distance.toStringAsFixed(0)}mm',
@@ -11239,11 +8814,11 @@ class LinesPainter extends CustomPainter {
         backgroundColor: Colors.black.withOpacity(0.7),
       );
     }
-    
+
     // 현재 점 그리기 (드래그 중이거나 원 모드가 아니고, 원이 선택되지 않았을 때만)
     if (!isPointDragging && !circleMode && selectedCircleIndex < 0) {
       final currentScreen = _modelToScreen(currentPoint);
-      
+
       if (arrowDirection != null) {
         // 화살표 그리기
         _drawArrow(canvas, currentScreen, arrowDirection!);
@@ -11258,11 +8833,11 @@ class LinesPainter extends CustomPainter {
         );
       }
     }
-    
+
     // 원 모드에서 선택된 중심점
     if (circleMode && circleCenter != null) {
       final centerScreen = _modelToScreen(circleCenter!);
-      
+
       // 펄스 효과를 위한 외부 원
       canvas.drawCircle(
         centerScreen,
@@ -11271,7 +8846,7 @@ class LinesPainter extends CustomPainter {
           ..color = const Color(0xFFFF7043).withOpacity(0.2)
           ..style = PaintingStyle.fill,
       );
-      
+
       // 메인 원
       canvas.drawCircle(
         centerScreen,
@@ -11280,7 +8855,7 @@ class LinesPainter extends CustomPainter {
           ..color = Colors.white
           ..style = PaintingStyle.fill,
       );
-      
+
       // 테두리
       canvas.drawCircle(
         centerScreen,
@@ -11291,9 +8866,9 @@ class LinesPainter extends CustomPainter {
           ..strokeWidth = 3,
       );
     }
-    
+
     // 호버된 점 표시 제거 - 선택된 끝점만 표시
-    
+
     // 점연결 모드일 때 모든 끝점에 작은 표시 (디버깅용)
     if (diagonalMode && !isPointDragging) {
       final dotColor = const Color(0xFFDCDCAA); // 점연결 버튼과 동일한 색상
@@ -11307,7 +8882,7 @@ class LinesPainter extends CustomPainter {
             ..color = dotColor
             ..style = PaintingStyle.fill,
         );
-        
+
         // 끝점
         final endScreen = _modelToScreen(line.end);
         canvas.drawCircle(
@@ -11318,19 +8893,50 @@ class LinesPainter extends CustomPainter {
             ..style = PaintingStyle.fill,
         );
       }
-      
-      // 마우스/터치 위치 표시 제거 (빨간 십자선과 좌표 제거)
+
+      // 마우스/터치 위치 표시 (디버깅용)
+      if (mousePosition != null) {
+        // 십자선 표시
+        final crossPaint = Paint()
+          ..color = Colors.red.withOpacity(0.5)
+          ..strokeWidth = 1;
+        canvas.drawLine(
+          Offset(mousePosition!.dx - 20, mousePosition!.dy),
+          Offset(mousePosition!.dx + 20, mousePosition!.dy),
+          crossPaint,
+        );
+        canvas.drawLine(
+          Offset(mousePosition!.dx, mousePosition!.dy - 20),
+          Offset(mousePosition!.dx, mousePosition!.dy + 20),
+          crossPaint,
+        );
+
+        // 위치 텍스트
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text:
+                '(${mousePosition!.dx.toInt()}, ${mousePosition!.dy.toInt()})',
+            style: const TextStyle(
+              color: Colors.red,
+              fontSize: 10,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, mousePosition! + const Offset(5, -15));
+      }
     }
-    
+
     // 선택된 끝점 표시 (빨간 점 또는 파란 점)
     if (selectedEndpoint != null) {
       final selectedScreen = _modelToScreen(selectedEndpoint!);
-      
+
       // 방향키 두 번 눌렀을 때는 파란색, 아니면 빨간색
-      final pointColor = isDoubleDirectionPressed 
-        ? const Color(0xFF2196F3) // 파란색
-        : const Color(0xFFE53935); // 빨간색
-      
+      final pointColor = isDoubleDirectionPressed
+          ? const Color(0xFF2196F3) // 파란색
+          : const Color(0xFFE53935); // 빨간색
+
       canvas.drawCircle(
         selectedScreen,
         5,
@@ -11339,7 +8945,7 @@ class LinesPainter extends CustomPainter {
           ..style = PaintingStyle.fill,
       );
     }
-    
+
     // 그룹 드래그 중일 때 시각적 피드백
     if (isGroupDragging) {
       // 드래그 중인 선들을 반투명하게 표시
@@ -11348,7 +8954,7 @@ class LinesPainter extends CustomPainter {
           final line = lines[i];
           final startScreen = _modelToScreen(line.start);
           final endScreen = _modelToScreen(line.end);
-          
+
           canvas.drawLine(
             startScreen,
             endScreen,
@@ -11358,11 +8964,11 @@ class LinesPainter extends CustomPainter {
           );
         }
       }
-      
+
       // 스냅 대상이 있으면 표시
       if (snapTargetPoint != null) {
         final snapScreen = _modelToScreen(snapTargetPoint!);
-        
+
         // 스냅 대상 점을 강조
         canvas.drawCircle(
           snapScreen,
@@ -11371,7 +8977,7 @@ class LinesPainter extends CustomPainter {
             ..color = const Color(0xFF4CAF50).withOpacity(0.3)
             ..style = PaintingStyle.fill,
         );
-        
+
         canvas.drawCircle(
           snapScreen,
           8,
@@ -11394,26 +9000,21 @@ class LinesPainter extends CustomPainter {
 
     // 방향키 두 번 누름 상태에 따라 색상 변경
     Color arrowColor;
-    // 창문 선이 선택되었는지 확인
-    bool isWindowLineSelected = selectedLineIndex >= 0 &&
-        selectedLineIndex < lines.length &&
-        lines[selectedLineIndex].openingType == 'window';
-
     if (isDoubleDirectionPressed) {
-      arrowColor = const Color(0xFF8B949E); // 무채색 (회색)
-    } else if (isWindowLineSelected || pendingOpeningType == 'window') {
-      arrowColor = const Color(0xFF569CD6); // 창문 버튼 색상
+      arrowColor = const Color(0xFF2196F3); // 파란색 계열 (Material Blue)
+    } else if (pendingOpeningType == 'window') {
+      arrowColor = const Color(0xFFFF7043);
     } else {
       arrowColor = const Color(0xFFE53935);
     }
-    
+
     // 외곽 글로우 효과
     final glowPaint = Paint()
       ..color = arrowColor.withOpacity(0.3)
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    
+
     // 메인 화살표 스트로크
     final strokePaint = Paint()
       ..color = arrowColor
@@ -11421,75 +9022,83 @@ class LinesPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
-    
+
     // 화살표 끝 점
     Offset endPoint;
     Offset leftWing;
     Offset rightWing;
-    
+
     switch (direction) {
       case 'Up':
         endPoint = Offset(position.dx, position.dy - arrowLength);
         leftWing = Offset(
           endPoint.dx - arrowLength * math.sin(arrowAngle),
-          endPoint.dy + arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dy +
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
         );
         rightWing = Offset(
           endPoint.dx + arrowLength * math.sin(arrowAngle),
-          endPoint.dy + arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dy +
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
         );
         break;
-        
+
       case 'Down':
         endPoint = Offset(position.dx, position.dy + arrowLength);
         leftWing = Offset(
           endPoint.dx - arrowLength * math.sin(arrowAngle),
-          endPoint.dy - arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dy -
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
         );
         rightWing = Offset(
           endPoint.dx + arrowLength * math.sin(arrowAngle),
-          endPoint.dy - arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dy -
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
         );
         break;
-        
+
       case 'Left':
         endPoint = Offset(position.dx - arrowLength, position.dy);
         leftWing = Offset(
-          endPoint.dx + arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dx +
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
           endPoint.dy - arrowLength * math.sin(arrowAngle),
         );
         rightWing = Offset(
-          endPoint.dx + arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dx +
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
           endPoint.dy + arrowLength * math.sin(arrowAngle),
         );
         break;
-        
+
       case 'Right':
         endPoint = Offset(position.dx + arrowLength, position.dy);
         leftWing = Offset(
-          endPoint.dx - arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dx -
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
           endPoint.dy - arrowLength * math.sin(arrowAngle),
         );
         rightWing = Offset(
-          endPoint.dx - arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
+          endPoint.dx -
+              arrowLength * math.cos(arrowAngle) * 0.48, // 0.6 * 0.8 = 0.48
           endPoint.dy + arrowLength * math.sin(arrowAngle),
         );
         break;
-        
+
       default:
         return;
     }
-    
+
     // 글로우 효과 (선택적)
     canvas.drawLine(position, endPoint, glowPaint);
     canvas.drawLine(leftWing, endPoint, glowPaint);
     canvas.drawLine(rightWing, endPoint, glowPaint);
-    
+
     // 메인 화살표 그리기
     canvas.drawLine(position, endPoint, strokePaint);
     canvas.drawLine(leftWing, endPoint, strokePaint);
     canvas.drawLine(rightWing, endPoint, strokePaint);
-    
+
     // 중심점 - 작은 원
     canvas.drawCircle(
       position,
@@ -11511,21 +9120,21 @@ class LinesPainter extends CustomPainter {
   void _drawDimension(Canvas canvas, Line line) {
     final start = _modelToScreen(line.start);
     final end = _modelToScreen(line.end);
-    
+
     final dx = line.end.dx - line.start.dx;
     final dy = line.end.dy - line.start.dy;
     final length = math.sqrt(dx * dx + dy * dy).round();
-    
+
     if (length == 0) return;
-    
+
     final midX = (start.dx + end.dx) / 2;
     final midY = (start.dy + end.dy) / 2;
-    
+
     // 텍스트 위치 계산 - 12픽셀 고정 거리
     final angle = math.atan2(dy, dx);
     final offset = 12.0;
     double nx, ny;
-    
+
     // 회전이 없을 때는 기본 방식
     if (viewRotation.abs() < 0.01) {
       nx = -math.sin(angle) * offset;
@@ -11533,28 +9142,33 @@ class LinesPainter extends CustomPainter {
     } else {
       // 회전이 있을 때는 화면에서 보이는 선의 방향을 기준으로 계산
       // 화면 좌표계에서의 선의 방향
-      final screenStartX = start.dx * math.cos(viewRotation) - start.dy * math.sin(viewRotation);
-      final screenStartY = start.dx * math.sin(viewRotation) + start.dy * math.cos(viewRotation);
-      final screenEndX = end.dx * math.cos(viewRotation) - end.dy * math.sin(viewRotation);
-      final screenEndY = end.dx * math.sin(viewRotation) + end.dy * math.cos(viewRotation);
-      
+      final screenStartX =
+          start.dx * math.cos(viewRotation) - start.dy * math.sin(viewRotation);
+      final screenStartY =
+          start.dx * math.sin(viewRotation) + start.dy * math.cos(viewRotation);
+      final screenEndX =
+          end.dx * math.cos(viewRotation) - end.dy * math.sin(viewRotation);
+      final screenEndY =
+          end.dx * math.sin(viewRotation) + end.dy * math.cos(viewRotation);
+
       // 화면에서의 선의 각도
-      final screenAngle = math.atan2(screenEndY - screenStartY, screenEndX - screenStartX);
-      
+      final screenAngle =
+          math.atan2(screenEndY - screenStartY, screenEndX - screenStartX);
+
       // 화면 기준으로 수직 방향 오프셋 (12픽셀 고정)
       final screenNx = -math.sin(screenAngle) * offset;
       final screenNy = math.cos(screenAngle) * offset;
-      
+
       // 모델 좌표계로 역변환
       final cos = math.cos(-viewRotation);
       final sin = math.sin(-viewRotation);
       nx = screenNx * cos - screenNy * sin;
       ny = screenNx * sin + screenNy * cos;
     }
-    
+
     canvas.save();
     canvas.translate(midX + nx, midY + ny);
-    
+
     // 텍스트 회전 - 화면 회전을 고려
     double textAngle = -angle - viewRotation;
     // 텍스트가 항상 읽기 쉬운 방향이 되도록 조정
@@ -11565,7 +9179,7 @@ class LinesPainter extends CustomPainter {
       textAngle += math.pi;
     }
     canvas.rotate(textAngle);
-    
+
     // 텍스트 외곽선 (stroke) 그리기
     final outlinePainter = TextPainter(
       text: TextSpan(
@@ -11586,7 +9200,7 @@ class LinesPainter extends CustomPainter {
       canvas,
       Offset(-outlinePainter.width / 2, -outlinePainter.height / 2),
     );
-    
+
     // 텍스트 채우기 (fill) 그리기
     final fillPainter = TextPainter(
       text: TextSpan(
@@ -11604,29 +9218,29 @@ class LinesPainter extends CustomPainter {
       canvas,
       Offset(-fillPainter.width / 2, -fillPainter.height / 2),
     );
-    
+
     canvas.restore();
   }
 
   void _drawCircleDimension(Canvas canvas, Circle circle) {
     final centerScreen = _modelToScreen(circle.center);
     final diameter = (circle.radius * 2).round();
-    
+
     if (diameter == 0) return;
-    
+
     // 지름 표시 위치 - 원의 우측 상단
     final textX = centerScreen.dx + (circle.radius * viewScale * 0.7);
     final textY = centerScreen.dy - (circle.radius * viewScale * 0.7);
-    
+
     canvas.save();
     canvas.translate(textX, textY);
-    
+
     // 화면 회전을 고려한 텍스트 회전
     canvas.rotate(-viewRotation);
-    
+
     // 지름 표시 텍스트 (Ø 기호와 함께)
     final dimensionText = 'Ø$diameter';
-    
+
     // 텍스트 외곽선 (stroke) 그리기
     final outlinePainter = TextPainter(
       text: TextSpan(
@@ -11647,7 +9261,7 @@ class LinesPainter extends CustomPainter {
       canvas,
       Offset(-outlinePainter.width / 2, -outlinePainter.height / 2),
     );
-    
+
     // 텍스트 채우기 (fill) 그리기
     final fillPainter = TextPainter(
       text: TextSpan(
@@ -11665,27 +9279,30 @@ class LinesPainter extends CustomPainter {
       canvas,
       Offset(-fillPainter.width / 2, -fillPainter.height / 2),
     );
-    
+
     canvas.restore();
   }
 
-  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint, double dashWidth, double dashSpace) {
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint,
+      double dashWidth, double dashSpace) {
     final distance = (end - start).distance;
     final dx = (end.dx - start.dx) / distance;
     final dy = (end.dy - start.dy) / distance;
-    
+
     double currentDistance = 0;
     while (currentDistance < distance) {
       final dashEnd = currentDistance + dashWidth;
       if (dashEnd > distance) {
         canvas.drawLine(
-          Offset(start.dx + dx * currentDistance, start.dy + dy * currentDistance),
+          Offset(
+              start.dx + dx * currentDistance, start.dy + dy * currentDistance),
           end,
           paint,
         );
       } else {
         canvas.drawLine(
-          Offset(start.dx + dx * currentDistance, start.dy + dy * currentDistance),
+          Offset(
+              start.dx + dx * currentDistance, start.dy + dy * currentDistance),
           Offset(start.dx + dx * dashEnd, start.dy + dy * dashEnd),
           paint,
         );
@@ -11714,14 +9331,14 @@ class LinesPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     );
-    
+
     textPainter.layout();
-    
+
     final textOffset = Offset(
       position.dx - textPainter.width / 2,
       position.dy - textPainter.height / 2,
     );
-    
+
     // 배경색이 있으면 배경 그리기
     if (backgroundColor != null) {
       final backgroundRect = Rect.fromLTWH(
@@ -11730,13 +9347,13 @@ class LinesPainter extends CustomPainter {
         textPainter.width + 8,
         textPainter.height + 4,
       );
-      
+
       canvas.drawRRect(
         RRect.fromRectAndRadius(backgroundRect, const Radius.circular(4)),
         Paint()..color = backgroundColor,
       );
     }
-    
+
     textPainter.paint(canvas, textOffset);
   }
 
@@ -11744,11 +9361,11 @@ class LinesPainter extends CustomPainter {
     // 회전 변환 적용
     final cos = math.cos(viewRotation);
     final sin = math.sin(viewRotation);
-    
+
     // 회전된 좌표
     final rotatedX = model.dx * cos - model.dy * sin;
     final rotatedY = model.dx * sin + model.dy * cos;
-    
+
     return Offset(
       viewOffset.dx + rotatedX * viewScale,
       viewOffset.dy - rotatedY * viewScale,
@@ -11769,7 +9386,8 @@ class LinesPainter extends CustomPainter {
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke;
 
-      _drawDashedLine(canvas, point1Screen, point2Screen, dashedLinePaint, 8, 4);
+      _drawDashedLine(
+          canvas, point1Screen, point2Screen, dashedLinePaint, 8, 4);
 
       // 양쪽 끝에 작은 원 그리기
       final endPointPaint = Paint()

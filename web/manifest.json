@@ -1,13 +1,18 @@
 {
-    "name": "line_drawer_app",
-    "short_name": "line_drawer_app",
+    "name": "HV LINE",
+    "short_name": "HV LINE",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "HV LINE - 실시간 선 그리기 도구",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "permissions": {
+        "audio-capture": {
+            "description": "음성 인식을 위해 마이크 접근이 필요합니다."
+        }
+    },
     "icons": [
         {
             "src": "icons/Icon-192.png",

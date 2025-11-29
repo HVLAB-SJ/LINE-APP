@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter run:*)",
+      "Bash(timeout 30 flutter run -d chrome)",
+      "Bash(flutter:*)",
+      "Bash(copy:*)",
+      "Bash(timeout 5 cat:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

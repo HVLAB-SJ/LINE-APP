@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HV LINE - Desktop</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, sans-serif;
+            background: #0D1117;
+            color: #E6EDF3;
+            padding: 50px 60px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid #30363D;
+        }
+
+        .header h1 {
+            font-size: 40px;
+            font-weight: 600;
+            letter-spacing: 12px;
+            color: #fff;
+        }
+
+        .header .mode {
+            font-size: 11px;
+            font-weight: 400;
+            color: #6A9955;
+            letter-spacing: 5px;
+            margin-top: 6px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: #8B949E;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+        }
+
+        .item {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+        }
+
+        .item-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #E6EDF3;
+            margin-bottom: 4px;
+        }
+
+        .item-sub {
+            font-size: 10px;
+            color: #8B949E;
+        }
+
+        .code {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+            color: #9CDCFE;
+            letter-spacing: 0.5px;
+        }
+
+        .highlight {
+            color: #CE9178;
+            font-weight: 600;
+        }
+
+        .table-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #21262D;
+        }
+
+        .table-row:last-child { border-bottom: none; }
+
+        .table-key {
+            width: 85px;
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            color: #E6EDF3;
+        }
+
+        .table-value {
+            flex: 1;
+            font-size: 11px;
+            color: #8B949E;
+        }
+
+        /* Tools Section */
+        .tools-section {
+            padding-top: 32px;
+            border-top: 1px solid #30363D;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 12px;
+        }
+
+        .tool-item {
+            text-align: center;
+        }
+
+        .tool-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 8px;
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .tool-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tool-name {
+            font-size: 10px;
+            font-weight: 500;
+            color: #E6EDF3;
+            margin-bottom: 2px;
+        }
+
+        .tool-desc {
+            font-size: 9px;
+            color: #8B949E;
+            line-height: 1.3;
+        }
+
+        .tool-shortcut {
+            font-family: 'SF Mono', monospace;
+            font-size: 9px;
+            color: #6A9955;
+            margin-top: 2px;
+        }
+
+        /* Tips Section */
+        .tips-section {
+            padding-top: 32px;
+            margin-top: 32px;
+            border-top: 1px solid #30363D;
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .tip-box {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .tip-label {
+            font-size: 10px;
+            color: #8B949E;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .tip-code {
+            font-family: 'SF Mono', monospace;
+            font-size: 11px;
+            color: #9CDCFE;
+        }
+
+        .tip-note {
+            font-size: 9px;
+            color: #6A9955;
+            margin-top: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 24px;
+            margin-top: 32px;
+            border-top: 1px solid #30363D;
+        }
+
+        .footer p {
+            font-size: 10px;
+            color: #484F58;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>HV LINE</h1>
+        <div class="mode">DESKTOP</div>
+    </div>
+
+    <div class="main-grid">
+
+        <!-- 기본 조작 -->
+        <div>
+            <div class="section">
+                <div class="section-title">기본 조작</div>
+
+                <div class="item">
+                    <div class="item-label">선 그리기</div>
+                    <div class="code">방향키 → 숫자 → Enter</div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">점만 이동 <span class="item-sub">선 없이</span></div>
+                    <div class="code">방향키 <span class="highlight">×2</span> → 숫자 → Enter</div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">선 길이 수정</div>
+                    <div class="code">선 클릭 → 새 길이 입력 → Enter</div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">그룹 이동</div>
+                    <div class="code">더블클릭 → 방향 → 숫자 → Enter</div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">수식 입력</div>
+                    <div class="code">1500 + 100 = <span class="highlight">1600</span></div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">메모 추가</div>
+                    <div class="code">빈 화면 길게 누르기</div>
+                </div>
+
+                <div class="item">
+                    <div class="item-label">선 분할</div>
+                    <div class="code">기존 선 위에서 반대/같은 방향 그리기</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 단축키 -->
+        <div>
+            <div class="section">
+                <div class="section-title">단축키</div>
+                <div class="table-row">
+                    <div class="table-key">W</div>
+                    <div class="table-value">창문 모드 ON/OFF</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">Delete</div>
+                    <div class="table-value">삭제</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">Ctrl+Z</div>
+                    <div class="table-value">되돌리기</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">Ctrl+0</div>
+                    <div class="table-value">전체 보기</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">Ctrl+/-</div>
+                    <div class="table-value">확대 / 축소</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">Tab</div>
+                    <div class="table-value">다음 선 선택</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">ESC</div>
+                    <div class="table-value">취소 / 선택 해제</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 마우스 -->
+        <div>
+            <div class="section">
+                <div class="section-title">마우스</div>
+                <div class="table-row">
+                    <div class="table-key">클릭</div>
+                    <div class="table-value">선 선택</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">더블클릭</div>
+                    <div class="table-value">그룹 선택 / 빈 화면: 전체 보기</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">휠</div>
+                    <div class="table-value">확대 / 축소</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">드래그</div>
+                    <div class="table-value">화면 이동</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">끝점 드래그</div>
+                    <div class="table-value">그룹 이동 (스냅)</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">길게 누르기</div>
+                    <div class="table-value">메모 추가</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">메모</div>
+                <div class="table-row">
+                    <div class="table-key">길게 누르기</div>
+                    <div class="table-value">빈 공간에 메모 추가</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">클릭</div>
+                    <div class="table-value">메모 선택 (노란 테두리)</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">선택 후 클릭</div>
+                    <div class="table-value">메모 편집</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">선택 후 드래그</div>
+                    <div class="table-value">메모 이동</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">삭제</div>
+                <div class="table-row">
+                    <div class="table-key">선택 후</div>
+                    <div class="table-value">선택된 선/원 삭제</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-key">미선택</div>
+                    <div class="table-value">최근 항목 삭제</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 도구 -->
+    <div class="tools-section">
+        <div class="section-title">도구</div>
+        <div class="tools-grid">
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#569CD6" stroke-width="1.5">
+                        <rect x="3.6" y="3.6" width="16.8" height="16.8"/>
+                        <line x1="12" y1="3.6" x2="12" y2="20.4"/>
+                        <line x1="3.6" y1="12" x2="20.4" y2="12"/>
+                    </svg>
+                </div>
+                <div class="tool-name">창문</div>
+                <div class="tool-desc">창문 선 그리기</div>
+                <div class="tool-shortcut">W</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#DCDCAA" stroke-width="1.5">
+                        <line x1="4.8" y1="19.2" x2="19.2" y2="4.8"/>
+                        <circle cx="4.8" cy="19.2" r="3.6" fill="#DCDCAA" stroke="none"/>
+                        <circle cx="19.2" cy="4.8" r="3.6" fill="#DCDCAA" stroke="none"/>
+                    </svg>
+                </div>
+                <div class="tool-name">점연결</div>
+                <div class="tool-desc">대각선 연결</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#66BB6A" stroke-width="2">
+                        <circle cx="12" cy="12" r="8"/>
+                    </svg>
+                </div>
+                <div class="tool-name">원</div>
+                <div class="tool-desc">클릭 → 지름</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#FF7043" stroke-width="1.5">
+                        <rect x="2" y="9" width="20" height="6" rx="0.5"/>
+                        <line x1="6" y1="9" x2="6" y2="12"/>
+                        <line x1="10" y1="9" x2="10" y2="12"/>
+                        <line x1="14" y1="9" x2="14" y2="12"/>
+                        <line x1="18" y1="9" x2="18" y2="12"/>
+                    </svg>
+                </div>
+                <div class="tool-name">거리측정</div>
+                <div class="tool-desc">2개 클릭</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#CE9178" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M7 7l-4 4 4 4"/>
+                        <path d="M3 11h11a5 5 0 0 1 0 10h-1"/>
+                    </svg>
+                </div>
+                <div class="tool-name">되돌리기</div>
+                <div class="tool-desc">작업 취소</div>
+                <div class="tool-shortcut">Ctrl+Z</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#9CDCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12a8 8 0 0 1 14.3-4.8"/>
+                        <polyline points="18 3 18 7 14 7"/>
+                        <path d="M20 12a8 8 0 0 1-14.3 4.8"/>
+                        <polyline points="6 21 6 17 10 17"/>
+                    </svg>
+                </div>
+                <div class="tool-name">초기화</div>
+                <div class="tool-desc">전체 삭제</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#9CDCFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                    </svg>
+                </div>
+                <div class="tool-name">음성</div>
+                <div class="tool-desc">음성 입력</div>
+            </div>
+
+            <div class="tool-item">
+                <div class="tool-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#6A9955" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 9l-7 7-7-7"/>
+                        <path d="M12 16V3"/>
+                        <path d="M5 20h14"/>
+                    </svg>
+                </div>
+                <div class="tool-name">DXF</div>
+                <div class="tool-desc">CAD 내보내기</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 팁 -->
+    <div class="tips-section">
+        <div class="section-title">팁</div>
+        <div class="tips-grid">
+            <div class="tip-box">
+                <div class="tip-label">그룹 드래그</div>
+                <div class="tip-code">더블클릭 → 끝점 드래그</div>
+                <div class="tip-note">자동 스냅</div>
+            </div>
+            <div class="tip-box">
+                <div class="tip-label">그룹 방향키 이동</div>
+                <div class="tip-code">더블클릭 → 방향 → 숫자</div>
+                <div class="tip-note">정확한 거리</div>
+            </div>
+            <div class="tip-box">
+                <div class="tip-label">원 이동</div>
+                <div class="tip-code">원 클릭 → 방향 → 숫자</div>
+                <div class="tip-note">선/코너 스냅</div>
+            </div>
+            <div class="tip-box">
+                <div class="tip-label">창문 속성</div>
+                <div class="tip-code">창문 선 클릭 → 속성 입력</div>
+                <div class="tip-note">폭, 높이, 하단높이</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>실시간 동기화 · 1-10 페이지 · DXF 내보내기 · 음성 입력</p>
+    </div>
+
+</div>
+
+</body>
+</html>

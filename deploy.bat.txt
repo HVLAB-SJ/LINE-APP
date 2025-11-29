@@ -1,0 +1,12 @@
+@echo off
+echo Building Flutter web...
+flutter build web
+
+echo.
+echo Deploying to Firebase...
+firebase deploy --only hosting
+
+echo.
+echo Deployment complete! 
+echo Visit: https://hv-line.web.app
+pause
